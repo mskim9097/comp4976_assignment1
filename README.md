@@ -8,10 +8,17 @@ and is zipped on its own for D2L.
 | Folder | Course | Contents |
 |---|---|---|
 | `comp4976/` | COMP4976 | `MunicipalElections.Web.sln`, `web/` (ASP.NET Core MVC: public site + Admin area, EF Core Code First, SQLite, Identity), `docs/readme.txt` |
-| `comp4977/` | COMP4977 | `MunicipalElections.Api.sln`, `api/` (ASP.NET Core Web API, JWT, EF Core, SQLite), `ios/` (SwiftUI app, added later), `docs/` |
-| `.github/` | COMP4976 | Copilot instructions / prompts / skills (must stay at the repo root) |
+| `comp4977/` | COMP4977 | `MunicipalElections.Api.sln`, `api/` (ASP.NET Core Web API, JWT, EF Core, SQLite), `ios/` (SwiftUI app, added later), `docs/`, `README.md` (API details, endpoints, Azure URL) |
+| `.github/` | both | Copilot instructions / prompts / skills (COMP4976) and the Azure deployment workflow for the COMP4977 API; must stay at the repo root |
 
 Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global dotnet-ef`.
+
+## Deployed apps
+
+| Course | URL |
+|---|---|
+| COMP4977 API | https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net |
+| COMP4976 web | _to be added_ |
 
 ## Local setup
 
@@ -25,6 +32,9 @@ cp comp4977/api/appsettings.Development.example.json comp4977/api/appsettings.De
 
 On Windows (PowerShell): `Copy-Item comp4976/web/appsettings.Development.example.json comp4976/web/appsettings.Development.json`
 
+The API also needs a JWT signing key in its `appsettings.Development.json`; see
+[comp4977/README.md](comp4977/README.md).
+
 Build and run:
 
 ```bash
@@ -34,35 +44,11 @@ dotnet build comp4977/MunicipalElections.Api.sln
 dotnet run --project comp4977/api --launch-profile http
 ```
 
-## COMP4977 API
-
-Runs at `http://localhost:5214` (http profile). On startup it applies the EF Core migrations
-to `api.db` (SQLite) and loads sample data: 3 municipalities, 9 positions, 18 candidates.
-Sample requests for every endpoint are in `comp4977/api/MunicipalElections.Api.http`.
-
-Before the first run, set a JWT signing key in `comp4977/api/appsettings.Development.json`
-(`Jwt:Key`, at least 32 random characters). Generate one with `openssl rand -base64 48`.
-On Azure set the environment variables `Jwt__Key` and `ConnectionStrings__DefaultConnection`.
-
-| Method | Endpoint | Auth | Description |
-|---|---|---|---|
-| POST | `/api/auth/register` | no | Create an account (name, email, password min 6) |
-| POST | `/api/auth/login` | no | Returns `{ "token": "..." }` |
-| GET | `/api/auth/me` | JWT | Logged-in user (extra, for the Profile screen) |
-| GET | `/api/municipalities`, `/api/municipalities/{id}` | no | Municipalities |
-| GET | `/api/positions`, `/api/positions/{id}` | no | Positions (`?municipalityId=`) |
-| GET | `/api/candidates`, `/api/candidates/{id}` | no | Candidates (`?municipalityId=`, `?positionId=`) |
-| GET | `/api/candidates/search?name=` | no | Case-insensitive name search (also takes the filters above) |
-| GET | `/api/savedcandidates` | JWT | The user's voting guide |
-| POST | `/api/savedcandidates` | JWT | Add a candidate (`{ "candidateId": 1 }`) |
-| DELETE | `/api/savedcandidates/{id}` | JWT | Remove an entry (`id` = `savedCandidateId`) |
-
-`electionDate` is sent as `yyyy-MM-dd`; `dateSaved` is ISO-8601 UTC. Image URLs in responses are absolute.
-
 ## Branches
 
 Work on your own branch (`minsu`, `justice`) and open a Pull Request into `dev`.
 `dev` is merged into `main` when stable. Do not push directly to `main` or `dev`.
+Pushes to `main` that change `comp4977/api/` redeploy the API to Azure automatically.
 
 ## Submission (zip per course)
 
