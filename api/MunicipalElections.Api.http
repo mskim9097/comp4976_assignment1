@@ -1,0 +1,6 @@
+@MunicipalElections.Api_HostAddress = http://localhost:5214
+
+GET {{MunicipalElections.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
