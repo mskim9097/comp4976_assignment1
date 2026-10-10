@@ -15,7 +15,8 @@ Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global do
 
 ## Local setup
 
-The connection string is **not** committed. Copy the example file in each project and keep the copy untracked:
+Secrets and connection strings are **not** committed. Copy the example file in each project
+and keep the copy untracked:
 
 ```bash
 cp comp4976/web/appsettings.Development.example.json comp4976/web/appsettings.Development.json
@@ -30,8 +31,33 @@ Build and run:
 dotnet build comp4976/MunicipalElections.Web.sln
 dotnet run --project comp4976/web
 dotnet build comp4977/MunicipalElections.Api.sln
-dotnet run --project comp4977/api
+dotnet run --project comp4977/api --launch-profile http
 ```
+
+## COMP4977 API
+
+Runs at `http://localhost:5214` (http profile). On startup it applies the EF Core migrations
+to `api.db` (SQLite) and loads sample data: 3 municipalities, 9 positions, 18 candidates.
+Sample requests for every endpoint are in `comp4977/api/MunicipalElections.Api.http`.
+
+Before the first run, set a JWT signing key in `comp4977/api/appsettings.Development.json`
+(`Jwt:Key`, at least 32 random characters). Generate one with `openssl rand -base64 48`.
+On Azure set the environment variables `Jwt__Key` and `ConnectionStrings__DefaultConnection`.
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/auth/register` | no | Create an account (name, email, password min 6) |
+| POST | `/api/auth/login` | no | Returns `{ "token": "..." }` |
+| GET | `/api/auth/me` | JWT | Logged-in user (extra, for the Profile screen) |
+| GET | `/api/municipalities`, `/api/municipalities/{id}` | no | Municipalities |
+| GET | `/api/positions`, `/api/positions/{id}` | no | Positions (`?municipalityId=`) |
+| GET | `/api/candidates`, `/api/candidates/{id}` | no | Candidates (`?municipalityId=`, `?positionId=`) |
+| GET | `/api/candidates/search?name=` | no | Case-insensitive name search (also takes the filters above) |
+| GET | `/api/savedcandidates` | JWT | The user's voting guide |
+| POST | `/api/savedcandidates` | JWT | Add a candidate (`{ "candidateId": 1 }`) |
+| DELETE | `/api/savedcandidates/{id}` | JWT | Remove an entry (`id` = `savedCandidateId`) |
+
+`electionDate` is sent as `yyyy-MM-dd`; `dateSaved` is ISO-8601 UTC. Image URLs in responses are absolute.
 
 ## Branches
 

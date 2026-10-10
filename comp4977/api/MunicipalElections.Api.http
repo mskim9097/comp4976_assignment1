@@ -1,6 +1,77 @@
-@MunicipalElections.Api_HostAddress = http://localhost:5214
+# Municipal Elections API - request samples (VS Code REST Client, Visual Studio, Rider).
+# Start the API first:  dotnet run --project comp4977/api --launch-profile http
 
-GET {{MunicipalElections.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+@baseUrl = http://localhost:5214
+@email = demo@test.com
+@password = secret1
+
+### 1. Register
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Demo User",
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### 2. Login (returns { "token": "..." })
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
 
 ###
+@token = {{login.response.body.token}}
+
+### 3. Current user (extra endpoint, used by the Profile screen)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### 4. Municipalities
+GET {{baseUrl}}/api/municipalities
+
+###
+GET {{baseUrl}}/api/municipalities/1
+
+### 5. Positions (optional ?municipalityId=)
+GET {{baseUrl}}/api/positions
+
+###
+GET {{baseUrl}}/api/positions?municipalityId=1
+
+###
+GET {{baseUrl}}/api/positions/1
+
+### 6. Candidates (optional ?municipalityId= and ?positionId=)
+GET {{baseUrl}}/api/candidates
+
+###
+GET {{baseUrl}}/api/candidates?municipalityId=1&positionId=2
+
+###
+GET {{baseUrl}}/api/candidates/1
+
+### 7. Search candidates by name (also accepts municipalityId / positionId)
+GET {{baseUrl}}/api/candidates/search?name=an
+
+### 8. Voting guide (requires login)
+GET {{baseUrl}}/api/savedcandidates
+Authorization: Bearer {{token}}
+
+###
+POST {{baseUrl}}/api/savedcandidates
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "candidateId": 1
+}
+
+### Remove an entry (use the savedCandidateId from the list)
+DELETE {{baseUrl}}/api/savedcandidates/1
+Authorization: Bearer {{token}}
