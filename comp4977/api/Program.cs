@@ -4,6 +4,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MunicipalElections.Api.Data;
+using MunicipalElections.Api.Extensions;
 using MunicipalElections.Api.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,7 +61,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddApiDocumentation();
 
 var app = builder.Build();
 
@@ -72,10 +73,17 @@ using (var scope = app.Services.CreateScope())
     await SeedData.InitializeAsync(context);
 }
 
-if (app.Environment.IsDevelopment())
+// API documentation (also on Azure so the deployed API can be tried from a browser).
+app.MapOpenApi();
+app.UseSwaggerUI(options =>
 {
-    app.MapOpenApi();
-}
+    options.SwaggerEndpoint("/openapi/v1.json", "Municipal Elections API v1");
+    options.RoutePrefix = "swagger";
+    options.EnablePersistAuthorization();
+});
+// The site root and /api open the documentation, so the base URL is enough to try the API.
+app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+app.MapGet("/api", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

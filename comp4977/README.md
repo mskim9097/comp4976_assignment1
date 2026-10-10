@@ -5,6 +5,8 @@ SwiftUI app "Municipal Elections Companion" in `ios/`.
 
 - **Deployed API (Azure App Service):** https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net
 - **GitHub repository:** https://github.com/mskim9097/comp4976_assignment1 (this course lives in `comp4977/`)
+- **Swagger UI (try the API in a browser):** https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net/swagger
+  (the site root redirects there; locally it is http://localhost:5214/swagger)
 - Solution: `MunicipalElections.Api.sln`
 
 The Azure app runs on the Free F1 plan, so the first request after a quiet period can take
@@ -21,6 +23,8 @@ curl "$HOST/api/candidates/search?name=an"
 There are no seeded users: create one with `POST /api/auth/register`, then call
 `POST /api/auth/login` and send the returned token as `Authorization: Bearer <token>`.
 Sample requests for every endpoint are in `api/MunicipalElections.Api.http`.
+In Swagger UI, call `POST /api/auth/login`, copy the token, press **Authorize** and paste it to try the
+endpoints marked with a lock.
 
 ## iOS app
 
