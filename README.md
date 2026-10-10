@@ -2,12 +2,14 @@
 
 BCIT COMP4976 / COMP4977 - Assignment 1 (due Fri Oct 23, 2026, 11:59 pm)
 
-| Folder | Course | Description |
+One GitHub repository, two separate D2L submissions. Each course folder is self-contained
+and is zipped on its own for D2L.
+
+| Folder | Course | Contents |
 |---|---|---|
-| `web/` | COMP4976 | ASP.NET Core MVC app (public site + Admin area), EF Core Code First, SQLite, Identity |
-| `api/` | COMP4977 | ASP.NET Core Web API (JWT), EF Core, SQLite |
-| `ios/` | COMP4977 | SwiftUI app that consumes `api/` (added later) |
-| `docs/` | COMP4976 | `readme.txt` and project documentation |
+| `comp4976/` | COMP4976 | `MunicipalElections.Web.sln`, `web/` (ASP.NET Core MVC: public site + Admin area, EF Core Code First, SQLite, Identity), `docs/readme.txt` |
+| `comp4977/` | COMP4977 | `MunicipalElections.Api.sln`, `api/` (ASP.NET Core Web API, JWT, EF Core, SQLite), `ios/` (SwiftUI app, added later), `docs/` |
+| `.github/` | COMP4976 | Copilot instructions / prompts / skills (must stay at the repo root) |
 
 Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global dotnet-ef`.
 
@@ -16,20 +18,28 @@ Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global do
 The connection string is **not** committed. Copy the example file in each project and keep the copy untracked:
 
 ```bash
-cp web/appsettings.Development.example.json web/appsettings.Development.json
-cp api/appsettings.Development.example.json api/appsettings.Development.json
+cp comp4976/web/appsettings.Development.example.json comp4976/web/appsettings.Development.json
+cp comp4977/api/appsettings.Development.example.json comp4977/api/appsettings.Development.json
 ```
 
-On Windows (PowerShell): `Copy-Item web/appsettings.Development.example.json web/appsettings.Development.json`
+On Windows (PowerShell): `Copy-Item comp4976/web/appsettings.Development.example.json comp4976/web/appsettings.Development.json`
 
-Run:
+Build and run:
 
 ```bash
-dotnet build MunicipalElections.sln
-dotnet run --project web
-dotnet run --project api
+dotnet build comp4976/MunicipalElections.Web.sln
+dotnet run --project comp4976/web
+dotnet build comp4977/MunicipalElections.Api.sln
+dotnet run --project comp4977/api
 ```
 
 ## Branches
 
-`main` is only updated through merges. Work on your own branch and merge when it builds.
+Work on your own branch (`minsu`, `justice`) and open a Pull Request into `dev`.
+`dev` is merged into `main` when stable. Do not push directly to `main` or `dev`.
+
+## Submission (zip per course)
+
+- COMP4976 zip: the `comp4976/` folder plus root `.github/`, `.gitignore`, `.gitattributes`, `global.json`.
+- COMP4977 zip: the `comp4977/` folder plus root `.gitignore`, `.gitattributes`, `global.json`.
+- Exclude `bin/`, `obj/`, `*.db`, `appsettings.Development.json`.
