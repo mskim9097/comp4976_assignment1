@@ -495,3 +495,6 @@ xcuserdata/
 DerivedData/
 *.xcuserstate
 .build/
+
+# Editor settings (local only)
+.vscode/
