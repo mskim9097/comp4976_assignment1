@@ -1,0 +1,44 @@
+erDiagram
+    AspNetUsers {
+        string Id PK
+        string UserName
+        string Email
+        string PasswordHash
+        string Name
+    }
+    Municipality {
+        int MunicipalityId PK
+        string Name
+        string Province
+        date ElectionDate
+        string Description
+        string LogoUrl
+    }
+    Position {
+        int PositionId PK
+        string Name
+        int SeatsAvailable
+        int MunicipalityId FK
+    }
+    Candidate {
+        int CandidateId PK
+        string Name
+        string Biography
+        string PhotoUrl
+        string Website
+        string Email
+        int PositionId FK
+        int MunicipalityId FK
+    }
+    SavedCandidate {
+        int SavedCandidateId PK
+        string UserId FK
+        int CandidateId FK
+        datetime DateSaved
+    }
+
+    Municipality ||--o{ Position : "has"
+    Municipality ||--o{ Candidate : "has"
+    Position ||--o{ Candidate : "has"
+    AspNetUsers ||--o{ SavedCandidate : "saves"
+    Candidate ||--o{ SavedCandidate : "is saved as"

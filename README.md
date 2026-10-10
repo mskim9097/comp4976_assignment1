@@ -8,7 +8,7 @@ and is zipped on its own for D2L.
 | Folder | Course | Contents |
 |---|---|---|
 | `comp4976/` | COMP4976 | `MunicipalElections.Web.sln`, `web/` (ASP.NET Core MVC: public site + Admin area, EF Core Code First, SQLite, Identity), `docs/readme.txt` |
-| `comp4977/` | COMP4977 | `MunicipalElections.Api.sln`, `api/` (ASP.NET Core Web API, JWT, EF Core, SQLite), `ios/` (SwiftUI app, added later), `docs/`, `README.md` (API details, endpoints, Azure URL) |
+| `comp4977/` | COMP4977 | `MunicipalElections.Api.sln`, `api/` (ASP.NET Core Web API, JWT, EF Core, SQLite), `ios/` (SwiftUI app "Municipal Elections Companion"), `docs/` (ERD, architecture), `README.md` (API details, endpoints, Azure URL) |
 | `.github/` | both | Copilot instructions / prompts / skills (COMP4976) and the Azure deployment workflow for the COMP4977 API; must stay at the repo root |
 
 Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global dotnet-ef`.
@@ -43,6 +43,10 @@ dotnet run --project comp4976/web
 dotnet build comp4977/MunicipalElections.Api.sln
 dotnet run --project comp4977/api --launch-profile http
 ```
+
+iOS app (macOS with Xcode only): open `comp4977/ios/MunicipalElectionsCompanion/MunicipalElectionsCompanion.xcodeproj`,
+pick an iPhone simulator and press Run. It talks to the deployed Azure API by default; see
+[comp4977/README.md](comp4977/README.md).
 
 ## Branches
 
