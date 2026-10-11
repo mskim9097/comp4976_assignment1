@@ -1,0 +1,28 @@
+flowchart LR
+    subgraph Phone["iPhone / iOS Simulator"]
+        direction TB
+        Views["SwiftUI Views<br/>(Login, Register, Municipalities,<br/>Candidates, Details, Voting Guide, Profile)"]
+        VM["ViewModels (MVVM)<br/>@Observable, async/await"]
+        Svc["API client<br/>URLSession + Codable"]
+        KC[("Keychain<br/>JWT token")]
+        Views --> VM --> Svc
+        Svc --- KC
+    end
+
+    subgraph Azure["Azure App Service (Linux, .NET 10, Canada Central)"]
+        direction TB
+        Auth["JWT Bearer authentication<br/>ASP.NET Core Identity"]
+        Ctl["Web API controllers<br/>Auth, Municipalities, Positions,<br/>Candidates, SavedCandidates"]
+        EF["EF Core (Code First)"]
+        DB[("SQLite<br/>/home/data/api.db")]
+        Img["Static images<br/>wwwroot/images"]
+        Auth --> Ctl --> EF --> DB
+    end
+
+    Svc -- "HTTPS + JSON<br/>Authorization: Bearer token" --> Auth
+    Svc -. "HTTPS image URLs" .-> Img
+
+    subgraph CI["GitHub"]
+        Repo["Repository<br/>api/"] --> Actions["GitHub Actions<br/>dotnet publish + deploy"]
+    end
+    Actions -- "deploy on push to main" --> Azure

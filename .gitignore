@@ -10,7 +10,7 @@ appsettings.Development.json
 .DS_Store
 instruction/
 script/
-comp4976/web/wwwroot/uploads/
+web/wwwroot/uploads/
 
 # dotenv files
 .env
@@ -490,7 +490,7 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# Xcode (comp4977/ios)
+# Xcode (ios)
 xcuserdata/
 DerivedData/
 *.xcuserstate

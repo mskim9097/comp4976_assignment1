@@ -1,5 +1,5 @@
 # Municipal Elections API - request samples (VS Code REST Client, Visual Studio, Rider).
-# Start the API first:  dotnet run --project comp4977/api --launch-profile http
+# Start the API first:  dotnet run --project api --launch-profile http
 
 @baseUrl = http://localhost:5214
 @email = demo@test.com

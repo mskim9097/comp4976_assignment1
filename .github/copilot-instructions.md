@@ -1,8 +1,9 @@
 # Copilot instructions - Municipal Elections Management System
 
 ## Project
-- `comp4976/web/`: ASP.NET Core MVC (.NET 10) for COMP4976. Public site + Admin area.
-- `comp4977/api/`: ASP.NET Core Web API (.NET 10, JWT) for COMP4977.
+- `web/`: ASP.NET Core MVC (.NET 10) for COMP4976. Public site + Admin area.
+- `api/`: ASP.NET Core Web API (.NET 10, JWT) for COMP4977 (being merged into `web/`, which will serve both).
+- `ios/`: SwiftUI app for COMP4977.
 - Data access: Entity Framework Core Code First with SQLite. Authentication: ASP.NET Core Identity.
 
 ## Conventions

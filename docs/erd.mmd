@@ -6,13 +6,22 @@ erDiagram
         string PasswordHash
         string Name
     }
+    AspNetRoles {
+        string Id PK
+        string Name
+    }
+    AspNetUserRoles {
+        string UserId PK, FK
+        string RoleId PK, FK
+    }
     Municipality {
         int MunicipalityId PK
         string Name
         string Province
         date ElectionDate
         string Description
-        string LogoUrl
+        string LogoFileName
+        string AdminRoleName
     }
     Position {
         int PositionId PK
@@ -23,12 +32,12 @@ erDiagram
     Candidate {
         int CandidateId PK
         string Name
-        string Biography
-        string PhotoUrl
+        string Profile
+        string PhotoFileName
         string Website
         string Email
+        datetime CreatedDate
         int PositionId FK
-        int MunicipalityId FK
     }
     SavedCandidate {
         int SavedCandidateId PK
@@ -37,8 +46,10 @@ erDiagram
         datetime DateSaved
     }
 
+    AspNetUsers ||--o{ AspNetUserRoles : "belongs to"
+    AspNetRoles ||--o{ AspNetUserRoles : "has members"
+    AspNetRoles ||..o| Municipality : "admin group (AdminRoleName)"
     Municipality ||--o{ Position : "has"
-    Municipality ||--o{ Candidate : "has"
     Position ||--o{ Candidate : "has"
     AspNetUsers ||--o{ SavedCandidate : "saves"
     Candidate ||--o{ SavedCandidate : "is saved as"

@@ -15,7 +15,7 @@ COMP4976 Assignment 1 - Municipal Elections Management System
    - TODO
 
 5. Special instructions for testing
-   - Copy comp4976/web/appsettings.Development.example.json to comp4976/web/appsettings.Development.json
+   - Copy web/appsettings.Development.example.json to web/appsettings.Development.json
    - Seeded users (password P@$$w0rd): super (Super Admin), pm (Pitt Meadows Admin)
    - TODO
 
