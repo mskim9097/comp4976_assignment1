@@ -7,7 +7,7 @@ SwiftUI, MVVM, async/await, `URLSession`, `Codable`, `NavigationStack`. Project:
 
 Run: open the project in Xcode, choose an iPhone simulator, press Run. The app calls the deployed
 Azure API. To use a local API instead, add the environment variable `API_BASE_URL`
-(for example `http://localhost:5214`) under Product > Scheme > Edit Scheme > Run > Arguments.
+(for example `http://localhost:5276`) under Product > Scheme > Edit Scheme > Run > Arguments.
 
 Screens: Log In, Create Account, Municipalities (logo, name, election date), Candidates (photo, name,
 position, municipality; search by name and filter by municipality/position), Candidate Details (biography,

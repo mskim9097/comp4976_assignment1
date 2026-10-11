@@ -17,6 +17,8 @@ COMP4976 Assignment 1 - Municipal Elections Management System
 5. Special instructions for testing
    - Copy web/appsettings.Development.example.json to web/appsettings.Development.json
    - Seeded users (password P@$$w0rd): super (Super Admin), pm (Pitt Meadows Admin)
+   - Set Jwt:Key in web/appsettings.Development.json (any random string of 32+ characters)
+   - The Web API for the iOS app (COMP4977) is part of this project: /api/... and Swagger at /swagger
    - TODO
 
 6. Deployed application URL (Azure)

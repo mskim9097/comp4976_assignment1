@@ -1,18 +1,20 @@
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
-using MunicipalElections.Api.Dtos;
-using MunicipalElections.Api.Models;
+using MunicipalElections.Web.Dtos;
+using MunicipalElections.Web.Models;
 
-namespace MunicipalElections.Api.Controllers;
+namespace MunicipalElections.Web.Controllers.Api;
 
+// Registration and login for the iOS app. Returns a JWT; the MVC admin site uses cookie login instead.
 [ApiController]
 [Route("api/auth")]
-public class AuthController(UserManager<ApplicationUser> userManager, JwtSettings jwt) : ControllerBase
+public class AuthApiController(UserManager<ApplicationUser> userManager, JwtSettings jwt) : ControllerBase
 {
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterRequest request)
@@ -52,7 +54,7 @@ public class AuthController(UserManager<ApplicationUser> userManager, JwtSetting
     }
 
     // Extra endpoint (not in the spec): lets the iOS Profile screen show the logged-in user.
-    [Authorize]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {
@@ -61,7 +63,7 @@ public class AuthController(UserManager<ApplicationUser> userManager, JwtSetting
         {
             return Unauthorized();
         }
-        return Ok(new UserResponse(user.Name ?? user.Email!, user.Email!));
+        return Ok(new UserResponse(user.Name ?? user.UserName ?? user.Email!, user.Email!));
     }
 
     private string CreateToken(ApplicationUser user)

@@ -1,18 +1,19 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
-using MunicipalElections.Api.Data;
-using MunicipalElections.Api.Dtos;
-using MunicipalElections.Api.Models;
+using MunicipalElections.Web.Data;
+using MunicipalElections.Web.Dtos;
+using MunicipalElections.Web.Models;
 
-namespace MunicipalElections.Api.Controllers;
+namespace MunicipalElections.Web.Controllers.Api;
 
 // The logged-in user's personal voting guide. Every query is scoped to the user id in the JWT.
-[Authorize]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [ApiController]
 [Route("api/savedcandidates")]
-public class SavedCandidatesController(ApplicationDbContext context) : ControllerBase
+public class SavedCandidatesApiController(ApplicationDbContext context) : ControllerBase
 {
     private string UserId => User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? string.Empty;
 
@@ -22,8 +23,7 @@ public class SavedCandidatesController(ApplicationDbContext context) : Controlle
         var saved = await context.SavedCandidates
             .AsNoTracking()
             .Where(s => s.UserId == UserId)
-            .Include(s => s.Candidate!).ThenInclude(c => c.Position)
-            .Include(s => s.Candidate!).ThenInclude(c => c.Municipality)
+            .Include(s => s.Candidate!).ThenInclude(c => c.Position!).ThenInclude(p => p.Municipality)
             .OrderByDescending(s => s.DateSaved)
             .ThenByDescending(s => s.SavedCandidateId)
             .ToListAsync();
@@ -35,8 +35,7 @@ public class SavedCandidatesController(ApplicationDbContext context) : Controlle
     {
         var candidate = await context.Candidates
             .AsNoTracking()
-            .Include(c => c.Position)
-            .Include(c => c.Municipality)
+            .Include(c => c.Position!).ThenInclude(p => p.Municipality)
             .FirstOrDefaultAsync(c => c.CandidateId == request.CandidateId);
         if (candidate is null)
         {

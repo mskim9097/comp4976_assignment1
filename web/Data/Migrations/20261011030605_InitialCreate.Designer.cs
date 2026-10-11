@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using MunicipalElections.Api.Data;
+using MunicipalElections.Web.Data;
 
 #nullable disable
 
-namespace MunicipalElections.Api.Data.Migrations
+namespace MunicipalElections.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261011030605_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.12");
@@ -92,9 +95,11 @@ namespace MunicipalElections.Api.Data.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ProviderKey")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ProviderDisplayName")
@@ -132,9 +137,11 @@ namespace MunicipalElections.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("LoginProvider")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
+                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Value")
@@ -145,7 +152,7 @@ namespace MunicipalElections.Api.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.ApplicationUser", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("TEXT");
@@ -212,34 +219,34 @@ namespace MunicipalElections.Api.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.Candidate", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.Candidate", b =>
                 {
                     b.Property<int>("CandidateId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Biography")
-                        .HasMaxLength(4000)
+                    b.Property<DateTime>("CreatedDate")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("MunicipalityId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PhotoUrl")
-                        .HasMaxLength(500)
+                    b.Property<string>("PhotoFileName")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PositionId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Profile")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Website")
                         .HasMaxLength(500)
@@ -247,18 +254,21 @@ namespace MunicipalElections.Api.Data.Migrations
 
                     b.HasKey("CandidateId");
 
-                    b.HasIndex("MunicipalityId");
-
                     b.HasIndex("PositionId");
 
                     b.ToTable("Candidates");
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.Municipality", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.Municipality", b =>
                 {
                     b.Property<int>("MunicipalityId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("AdminRoleName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
@@ -267,8 +277,8 @@ namespace MunicipalElections.Api.Data.Migrations
                     b.Property<DateTime>("ElectionDate")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("LogoUrl")
-                        .HasMaxLength(500)
+                    b.Property<string>("LogoFileName")
+                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
@@ -283,10 +293,13 @@ namespace MunicipalElections.Api.Data.Migrations
 
                     b.HasKey("MunicipalityId");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("Municipalities");
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.Position", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.Position", b =>
                 {
                     b.Property<int>("PositionId")
                         .ValueGeneratedOnAdd()
@@ -305,12 +318,13 @@ namespace MunicipalElections.Api.Data.Migrations
 
                     b.HasKey("PositionId");
 
-                    b.HasIndex("MunicipalityId");
+                    b.HasIndex("MunicipalityId", "Name")
+                        .IsUnique();
 
                     b.ToTable("Positions");
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.SavedCandidate", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.SavedCandidate", b =>
                 {
                     b.Property<int>("SavedCandidateId")
                         .ValueGeneratedOnAdd()
@@ -347,7 +361,7 @@ namespace MunicipalElections.Api.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("MunicipalElections.Api.Models.ApplicationUser", null)
+                    b.HasOne("MunicipalElections.Web.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -356,7 +370,7 @@ namespace MunicipalElections.Api.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("MunicipalElections.Api.Models.ApplicationUser", null)
+                    b.HasOne("MunicipalElections.Web.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -371,7 +385,7 @@ namespace MunicipalElections.Api.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MunicipalElections.Api.Models.ApplicationUser", null)
+                    b.HasOne("MunicipalElections.Web.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -380,35 +394,27 @@ namespace MunicipalElections.Api.Data.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("MunicipalElections.Api.Models.ApplicationUser", null)
+                    b.HasOne("MunicipalElections.Web.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.Candidate", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.Candidate", b =>
                 {
-                    b.HasOne("MunicipalElections.Api.Models.Municipality", "Municipality")
-                        .WithMany("Candidates")
-                        .HasForeignKey("MunicipalityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MunicipalElections.Api.Models.Position", "Position")
+                    b.HasOne("MunicipalElections.Web.Models.Position", "Position")
                         .WithMany("Candidates")
                         .HasForeignKey("PositionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Municipality");
-
                     b.Navigation("Position");
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.Position", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.Position", b =>
                 {
-                    b.HasOne("MunicipalElections.Api.Models.Municipality", "Municipality")
+                    b.HasOne("MunicipalElections.Web.Models.Municipality", "Municipality")
                         .WithMany("Positions")
                         .HasForeignKey("MunicipalityId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -417,15 +423,15 @@ namespace MunicipalElections.Api.Data.Migrations
                     b.Navigation("Municipality");
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.SavedCandidate", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.SavedCandidate", b =>
                 {
-                    b.HasOne("MunicipalElections.Api.Models.Candidate", "Candidate")
+                    b.HasOne("MunicipalElections.Web.Models.Candidate", "Candidate")
                         .WithMany()
                         .HasForeignKey("CandidateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MunicipalElections.Api.Models.ApplicationUser", "User")
+                    b.HasOne("MunicipalElections.Web.Models.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -436,14 +442,12 @@ namespace MunicipalElections.Api.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.Municipality", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.Municipality", b =>
                 {
-                    b.Navigation("Candidates");
-
                     b.Navigation("Positions");
                 });
 
-            modelBuilder.Entity("MunicipalElections.Api.Models.Position", b =>
+            modelBuilder.Entity("MunicipalElections.Web.Models.Position", b =>
                 {
                     b.Navigation("Candidates");
                 });

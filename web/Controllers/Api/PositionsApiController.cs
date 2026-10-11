@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MunicipalElections.Api.Data;
-using MunicipalElections.Api.Dtos;
+using MunicipalElections.Web.Data;
+using MunicipalElections.Web.Dtos;
 
-namespace MunicipalElections.Api.Controllers;
+namespace MunicipalElections.Web.Controllers.Api;
 
 [ApiController]
 [Route("api/positions")]
-public class PositionsController(ApplicationDbContext context) : ControllerBase
+public class PositionsApiController(ApplicationDbContext context) : ControllerBase
 {
     // Optional ?municipalityId= lets the app list the positions of one municipality (filtering).
     [HttpGet]

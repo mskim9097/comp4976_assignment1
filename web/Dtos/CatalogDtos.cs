@@ -1,7 +1,10 @@
-using MunicipalElections.Api.Extensions;
-using MunicipalElections.Api.Models;
+using MunicipalElections.Web.Extensions;
+using MunicipalElections.Web.Models;
 
-namespace MunicipalElections.Api.Dtos;
+namespace MunicipalElections.Web.Dtos;
+
+// JSON shapes returned by the Web API (used by the iOS app). They are built from the shared entities:
+// Profile -> biography, PhotoFileName/LogoFileName -> absolute URLs, municipality taken from the position.
 
 // ElectionDate is sent as a date-only value ("2026-10-17") so it does not shift with time zones.
 public record MunicipalityDto(
@@ -18,7 +21,7 @@ public record MunicipalityDto(
         m.Province,
         DateOnly.FromDateTime(m.ElectionDate),
         m.Description,
-        request.ToAbsoluteUrl(m.LogoUrl));
+        request.LogoUrl(m.LogoFileName));
 }
 
 public record PositionDto(
@@ -51,12 +54,12 @@ public record CandidateDto(
     public static CandidateDto From(Candidate c, HttpRequest request) => new(
         c.CandidateId,
         c.Name,
-        c.Biography,
-        request.ToAbsoluteUrl(c.PhotoUrl),
+        c.Profile,
+        request.PhotoUrl(c.PhotoFileName),
         c.Website,
         c.Email,
         c.PositionId,
         c.Position!.Name,
-        c.MunicipalityId,
-        c.Municipality!.Name);
+        c.Position.MunicipalityId,
+        c.Position.Municipality!.Name);
 }

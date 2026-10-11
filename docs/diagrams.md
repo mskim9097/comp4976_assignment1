@@ -13,6 +13,10 @@ See [erd.md](erd.md) (merged schema for the MVC site and the Web API).
 
 ```mermaid
 flowchart LR
+    subgraph Browser["Web browser"]
+        Site["Public site and Admin area<br/>(MVC views, cookie login)"]
+    end
+
     subgraph Phone["iPhone / iOS Simulator"]
         direction TB
         Views["SwiftUI Views<br/>(Login, Register, Municipalities,<br/>Candidates, Details, Voting Guide, Profile)"]
@@ -23,29 +27,33 @@ flowchart LR
         Svc --- KC
     end
 
-    subgraph Azure["Azure App Service (Linux, .NET 10, Canada Central)"]
+    subgraph Azure["Azure App Service (Linux, .NET 10, Canada Central): one ASP.NET Core app"]
         direction TB
-        Auth["JWT Bearer authentication<br/>ASP.NET Core Identity"]
-        Ctl["Web API controllers<br/>Auth, Municipalities, Positions,<br/>Candidates, SavedCandidates"]
-        EF["EF Core (Code First)"]
-        DB[("SQLite<br/>/home/data/api.db")]
+        MVC["MVC controllers + views<br/>Admin area (roles: Super Admin,<br/>municipality admin groups)"]
+        Auth["JWT Bearer authentication<br/>(/api endpoints)"]
+        Ctl["Web API controllers<br/>Auth, Municipalities, Positions,<br/>Candidates, SavedCandidates + Swagger"]
+        EF["EF Core (Code First)<br/>ASP.NET Core Identity"]
+        DB[("One SQLite database<br/>/home/data/app.db")]
         Img["Static images<br/>wwwroot/images"]
-        Auth --> Ctl --> EF --> DB
+        MVC --> EF
+        Auth --> Ctl --> EF
+        EF --> DB
     end
 
+    Site -- "HTTPS" --> MVC
     Svc -- "HTTPS + JSON<br/>Authorization: Bearer token" --> Auth
     Svc -. "HTTPS image URLs" .-> Img
 
     subgraph CI["GitHub"]
-        Repo["Repository<br/>api/"] --> Actions["GitHub Actions<br/>dotnet publish + deploy"]
+        Repo["Repository<br/>web/"] --> Actions["GitHub Actions<br/>dotnet publish + deploy"]
     end
     Actions -- "deploy on push to main" --> Azure
 ```
 
-The iOS app (left) calls the REST API over HTTPS. Login returns a JWT that the app keeps in
-the Keychain and sends as a Bearer token for the voting-guide endpoints. The API
-(right) reads and writes SQLite through EF Core and serves the candidate and logo images.
-Pushes to `main` that change `api/` are built and deployed by GitHub Actions.
+The administrators use the MVC site in a browser (cookie login). The iOS app calls the REST API of the same
+app over HTTPS: login returns a JWT that the app keeps in the Keychain and sends as a Bearer token for the
+voting-guide endpoints. Both parts use the same EF Core model and one SQLite database, and the app also serves
+the candidate and logo images. Pushes to `main` that change `web/` are built and deployed by GitHub Actions.
 
 Re-export the PNGs after editing a `.mmd` file (needs Node and Chrome):
-`npx @mermaid-js/mermaid-cli -i erd.mmd -o erd.png -s 2 -b white`
+`npx @mermaid-js/mermaid-cli -i architecture.mmd -o architecture.png -s 2 -b white`

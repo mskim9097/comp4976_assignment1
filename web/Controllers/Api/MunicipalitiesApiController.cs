@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MunicipalElections.Api.Data;
-using MunicipalElections.Api.Dtos;
+using MunicipalElections.Web.Data;
+using MunicipalElections.Web.Dtos;
 
-namespace MunicipalElections.Api.Controllers;
+namespace MunicipalElections.Web.Controllers.Api;
 
 [ApiController]
 [Route("api/municipalities")]
-public class MunicipalitiesController(ApplicationDbContext context) : ControllerBase
+public class MunicipalitiesApiController(ApplicationDbContext context) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MunicipalityDto>>> GetAll()

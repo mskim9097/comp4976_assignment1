@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MunicipalElections.Api.Data;
-using MunicipalElections.Api.Dtos;
-using MunicipalElections.Api.Models;
+using MunicipalElections.Web.Data;
+using MunicipalElections.Web.Dtos;
+using MunicipalElections.Web.Models;
 
-namespace MunicipalElections.Api.Controllers;
+namespace MunicipalElections.Web.Controllers.Api;
 
 [ApiController]
 [Route("api/candidates")]
-public class CandidatesController(ApplicationDbContext context) : ControllerBase
+public class CandidatesApiController(ApplicationDbContext context) : ControllerBase
 {
     // Optional ?municipalityId= and ?positionId= filters support the app's candidate directory.
     [HttpGet]
@@ -31,8 +31,7 @@ public class CandidatesController(ApplicationDbContext context) : ControllerBase
     {
         var candidate = await context.Candidates
             .AsNoTracking()
-            .Include(c => c.Position)
-            .Include(c => c.Municipality)
+            .Include(c => c.Position!).ThenInclude(p => p.Municipality)
             .FirstOrDefaultAsync(c => c.CandidateId == id);
         return candidate is null ? NotFound() : Ok(CandidateDto.From(candidate, Request));
     }
@@ -41,12 +40,11 @@ public class CandidatesController(ApplicationDbContext context) : ControllerBase
     {
         IQueryable<Candidate> query = context.Candidates
             .AsNoTracking()
-            .Include(c => c.Position)
-            .Include(c => c.Municipality);
+            .Include(c => c.Position!).ThenInclude(p => p.Municipality);
 
         if (municipalityId is not null)
         {
-            query = query.Where(c => c.MunicipalityId == municipalityId);
+            query = query.Where(c => c.Position!.MunicipalityId == municipalityId);
         }
         if (positionId is not null)
         {

@@ -1,4 +1,4 @@
-namespace MunicipalElections.Api.Models;
+namespace MunicipalElections.Web.Models;
 
 public class JwtSettings
 {

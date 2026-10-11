@@ -1,4 +1,8 @@
 flowchart LR
+    subgraph Browser["Web browser"]
+        Site["Public site and Admin area<br/>(MVC views, cookie login)"]
+    end
+
     subgraph Phone["iPhone / iOS Simulator"]
         direction TB
         Views["SwiftUI Views<br/>(Login, Register, Municipalities,<br/>Candidates, Details, Voting Guide, Profile)"]
@@ -9,20 +13,24 @@ flowchart LR
         Svc --- KC
     end
 
-    subgraph Azure["Azure App Service (Linux, .NET 10, Canada Central)"]
+    subgraph Azure["Azure App Service (Linux, .NET 10, Canada Central): one ASP.NET Core app"]
         direction TB
-        Auth["JWT Bearer authentication<br/>ASP.NET Core Identity"]
-        Ctl["Web API controllers<br/>Auth, Municipalities, Positions,<br/>Candidates, SavedCandidates"]
-        EF["EF Core (Code First)"]
-        DB[("SQLite<br/>/home/data/api.db")]
+        MVC["MVC controllers + views<br/>Admin area (roles: Super Admin,<br/>municipality admin groups)"]
+        Auth["JWT Bearer authentication<br/>(/api endpoints)"]
+        Ctl["Web API controllers<br/>Auth, Municipalities, Positions,<br/>Candidates, SavedCandidates + Swagger"]
+        EF["EF Core (Code First)<br/>ASP.NET Core Identity"]
+        DB[("One SQLite database<br/>/home/data/app.db")]
         Img["Static images<br/>wwwroot/images"]
-        Auth --> Ctl --> EF --> DB
+        MVC --> EF
+        Auth --> Ctl --> EF
+        EF --> DB
     end
 
+    Site -- "HTTPS" --> MVC
     Svc -- "HTTPS + JSON<br/>Authorization: Bearer token" --> Auth
     Svc -. "HTTPS image URLs" .-> Img
 
     subgraph CI["GitHub"]
-        Repo["Repository<br/>api/"] --> Actions["GitHub Actions<br/>dotnet publish + deploy"]
+        Repo["Repository<br/>web/"] --> Actions["GitHub Actions<br/>dotnet publish + deploy"]
     end
     Actions -- "deploy on push to main" --> Azure

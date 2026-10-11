@@ -1,9 +1,9 @@
 # Copilot instructions - Municipal Elections Management System
 
 ## Project
-- `web/`: ASP.NET Core MVC (.NET 10) for COMP4976. Public site + Admin area.
-- `api/`: ASP.NET Core Web API (.NET 10, JWT) for COMP4977 (being merged into `web/`, which will serve both).
-- `ios/`: SwiftUI app for COMP4977.
+- `web/`: one ASP.NET Core (.NET 10) project with one SQLite database. It serves the MVC site (public pages, Admin area, cookie login) and the JSON Web API under `/api` (JWT, Swagger) used by the iOS app.
+- `ios/`: SwiftUI app for COMP4977 that calls the Web API.
+- Entities: `Municipality`, `Position`, `Candidate`, `SavedCandidate` plus Identity (`ApplicationUser`, roles). Each municipality has an admin role named in `Municipality.AdminRoleName`; `Super Admin` manages everything.
 - Data access: Entity Framework Core Code First with SQLite. Authentication: ASP.NET Core Identity.
 
 ## Conventions

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
-namespace MunicipalElections.Api.Extensions;
+namespace MunicipalElections.Web.Extensions;
 
 public static class OpenApiExtensions
 {
@@ -13,6 +13,10 @@ public static class OpenApiExtensions
     {
         services.AddOpenApi(options =>
         {
+            // Document only the JSON API; the MVC pages are not part of it.
+            options.ShouldInclude = description =>
+                description.RelativePath?.StartsWith("api/", StringComparison.OrdinalIgnoreCase) == true;
+
             options.AddDocumentTransformer((document, context, cancellationToken) =>
             {
                 document.Info = new OpenApiInfo

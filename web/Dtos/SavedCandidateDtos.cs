@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using MunicipalElections.Api.Models;
+using MunicipalElections.Web.Models;
 
-namespace MunicipalElections.Api.Dtos;
+namespace MunicipalElections.Web.Dtos;
 
 public class SaveCandidateRequest
 {

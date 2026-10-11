@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace MunicipalElections.Api.Data.Migrations
+namespace MunicipalElections.Web.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -61,7 +61,8 @@ namespace MunicipalElections.Api.Data.Migrations
                     Province = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     ElectionDate = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    LogoUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true)
+                    LogoFileName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
+                    AdminRoleName = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -114,8 +115,8 @@ namespace MunicipalElections.Api.Data.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
-                    ProviderKey = table.Column<string>(type: "TEXT", nullable: false),
+                    LoginProvider = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    ProviderKey = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "TEXT", nullable: true),
                     UserId = table.Column<string>(type: "TEXT", nullable: false)
                 },
@@ -159,8 +160,8 @@ namespace MunicipalElections.Api.Data.Migrations
                 columns: table => new
                 {
                     UserId = table.Column<string>(type: "TEXT", nullable: false),
-                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    LoginProvider = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
                     Value = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
@@ -202,22 +203,16 @@ namespace MunicipalElections.Api.Data.Migrations
                     CandidateId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Biography = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: true),
-                    PhotoUrl = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    Profile = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
+                    PhotoFileName = table.Column<string>(type: "TEXT", maxLength: 255, nullable: true),
                     Website = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
                     Email = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
-                    PositionId = table.Column<int>(type: "INTEGER", nullable: false),
-                    MunicipalityId = table.Column<int>(type: "INTEGER", nullable: false)
+                    CreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    PositionId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Candidates", x => x.CandidateId);
-                    table.ForeignKey(
-                        name: "FK_Candidates_Municipalities_MunicipalityId",
-                        column: x => x.MunicipalityId,
-                        principalTable: "Municipalities",
-                        principalColumn: "MunicipalityId",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Candidates_Positions_PositionId",
                         column: x => x.PositionId,
@@ -291,19 +286,21 @@ namespace MunicipalElections.Api.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Candidates_MunicipalityId",
-                table: "Candidates",
-                column: "MunicipalityId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Candidates_PositionId",
                 table: "Candidates",
                 column: "PositionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Positions_MunicipalityId",
+                name: "IX_Municipalities_Name",
+                table: "Municipalities",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Positions_MunicipalityId_Name",
                 table: "Positions",
-                column: "MunicipalityId");
+                columns: new[] { "MunicipalityId", "Name" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_SavedCandidates_CandidateId",

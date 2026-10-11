@@ -2,13 +2,12 @@
 
 BCIT COMP4976 / COMP4977 - Assignment 1 (due Fri Oct 23, 2026, 11:59 pm)
 
-One repository for both courses. The MVC site and the Web API use one SQLite database
+One repository for both courses. The MVC site and the Web API are one project with one SQLite database
 (see [docs/erd.md](docs/erd.md)); the iOS app talks to the Web API.
 
 | Folder | What it is |
 |---|---|
-| `web/` | ASP.NET Core MVC site (COMP4976): public site, Admin area, EF Core Code First, SQLite, Identity |
-| `api/` | ASP.NET Core Web API with JWT and Swagger (COMP4977). Being merged into `web/`, which will serve both |
+| `web/` | One ASP.NET Core project: the MVC site (COMP4976: public site, Admin area, cookie login) and the Web API under `/api` (COMP4977: JWT, Swagger). EF Core Code First, one SQLite database, Identity |
 | `ios/` | SwiftUI app "Municipal Elections Companion" (COMP4977) |
 | `docs/` | `readme.txt` (COMP4976), ERD, architecture diagram, [API documentation](docs/api.md) |
 | `.github/` | Copilot instructions / prompts / skills (COMP4976) and the Azure deployment workflow; must stay at the repo root |
@@ -19,8 +18,7 @@ Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global do
 
 | What | URL |
 |---|---|
-| Web API (Swagger UI at `/swagger`) | https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net |
-| MVC site | _to be added_ |
+| Web app: MVC site at `/`, Web API at `/api/...`, Swagger UI at `/swagger` | https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net |
 
 ## Local setup
 
@@ -29,19 +27,18 @@ and keep the copy untracked:
 
 ```bash
 cp web/appsettings.Development.example.json web/appsettings.Development.json
-cp api/appsettings.Development.example.json api/appsettings.Development.json
 ```
 
 On Windows (PowerShell): `Copy-Item web/appsettings.Development.example.json web/appsettings.Development.json`
 
-The API also needs a JWT signing key in its `appsettings.Development.json`; see [docs/api.md](docs/api.md).
+Set `Jwt:Key` in `web/appsettings.Development.json` to a random string of at least 32 characters (`openssl rand -base64 48`); see [docs/api.md](docs/api.md).
+Seeded admin users (password `P@$$w0rd`): `super` (Super Admin) and `pm` (Pitt Meadows Admin).
 
 Build and run:
 
 ```bash
 dotnet build MunicipalElections.sln
-dotnet run --project web
-dotnet run --project api --launch-profile http
+dotnet run --project web --launch-profile http     # http://localhost:5276
 ```
 
 iOS app (macOS with Xcode only): open `ios/MunicipalElectionsCompanion/MunicipalElectionsCompanion.xcodeproj`,
@@ -51,7 +48,7 @@ pick an iPhone simulator and press Run. See [ios/README.md](ios/README.md).
 
 Work on your own branch (`minsu`, `justice`) and open a Pull Request into `dev`.
 `dev` is merged into `main` when stable. Do not push directly to `main` or `dev`.
-Pushes to `main` that change `api/` redeploy the API to Azure automatically.
+Pushes to `main` that change `web/` redeploy the app to Azure automatically.
 
 ## Submission
 

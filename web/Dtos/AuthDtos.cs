@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MunicipalElections.Api.Dtos;
+namespace MunicipalElections.Web.Dtos;
 
 public class RegisterRequest
 {

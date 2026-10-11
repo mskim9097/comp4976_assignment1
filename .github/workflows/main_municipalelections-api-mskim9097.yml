@@ -3,20 +3,20 @@
 
 name: Build and deploy ASP.Net Core app to Azure Web App - municipalelections-api-mskim9097
 
-# Deploys when the API code (or the SDK pin / this workflow) changes on main.
-# Changes to docs/ or ios/ do not redeploy the API.
+# Deploys the web app (MVC site + Web API) when its code (or the SDK pin / this workflow) changes on main.
+# Changes to docs/ or ios/ do not redeploy it.
 on:
   push:
     branches:
       - 'main'
     paths:
-      - 'api/**'
+      - 'web/**'
       - 'global.json'
       - '.github/workflows/main_municipalelections-api-mskim9097.yml'
   workflow_dispatch:
 
 concurrency:
-  group: deploy-municipalelections-api
+  group: deploy-municipalelections
   cancel-in-progress: false
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
           dotnet-version: '10.x'
 
       - name: dotnet publish
-        run: dotnet publish api/MunicipalElections.Api.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+        run: dotnet publish web/MunicipalElections.Web.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
