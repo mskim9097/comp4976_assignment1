@@ -22,8 +22,7 @@ Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global do
 
 ## Local setup
 
-Secrets and connection strings are **not** committed. Copy the example file in each project
-and keep the copy untracked:
+Secrets and connection strings are **not** committed. Copy the example file and keep the copy untracked:
 
 ```bash
 cp web/appsettings.Development.example.json web/appsettings.Development.json

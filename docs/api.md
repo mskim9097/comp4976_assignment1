@@ -1,6 +1,6 @@
 # Municipal Elections Web API
 
-ASP.NET Core Web API (.NET 10, EF Core, SQLite, Identity, JWT) inside the web app in `web/` consumed by the
+ASP.NET Core Web API (.NET 10, EF Core, SQLite, Identity, JWT) inside the web app in `web/`, consumed by the
 SwiftUI app "Municipal Elections Companion" (see [../ios/README.md](../ios/README.md)).
 
 - **Deployed API (Azure App Service):** https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net
@@ -20,8 +20,9 @@ curl $HOST/api/municipalities
 curl "$HOST/api/candidates/search?name=an"
 ```
 
-There are no seeded users: create one with `POST /api/auth/register`, then call
+Create an account with `POST /api/auth/register` (the iOS app does this on its Create Account screen), then call
 `POST /api/auth/login` and send the returned token as `Authorization: Bearer <token>`.
+The seeded admins can also log in here by email (`super@example.com`, `pm@example.com`, password `P@$$w0rd`).
 Sample requests for every endpoint are in `web/MunicipalElections.Web.http`.
 In Swagger UI, call `POST /api/auth/login`, copy the token, press **Authorize** and paste it to try the
 endpoints marked with a lock.
@@ -74,6 +75,9 @@ dotnet run --project web --launch-profile http     # http://localhost:5276 (site
 - App settings on Azure: `Jwt__Key` (random secret) and
   `ConnectionStrings__DefaultConnection` = `DataSource=/home/data/app.db;Cache=Shared`
   (`/home` is persistent storage; the app creates the folder on startup).
+- Startup command (Configuration > Stack settings): `dotnet MunicipalElections.Web.dll`. Deployments only add
+  and overwrite files, so files of an older project name can stay in `/home/site/wwwroot`; with two
+  `*.runtimeconfig.json` files Azure cannot tell which app to run and shows its default welcome page instead.
 - GitHub Actions workflow `.github/workflows/main_municipalelections-api-mskim9097.yml`
   publishes `web/` and deploys it when its code changes are pushed to `main`.
   Changes under `docs/` or `ios/` do not redeploy it.

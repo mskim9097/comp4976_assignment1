@@ -26,12 +26,14 @@ iOS app (COMP4977). Source: `erd.mmd` (Mermaid), exported image: `erd.png`.
   `Municipality.AdminRoleName` (dotted line in the diagram; a match by name, not a foreign key).
   A user in `Super Admin` can manage everything; a user in a municipality's admin group can manage the
   positions and candidates of that municipality only. Creating a municipality creates its group.
+- Database table names are plural (`Municipalities`, `Positions`, `Candidates`, `SavedCandidates`); the diagram uses
+  the entity names from the assignment.
 - `Candidate` has no `MunicipalityId`: it is derived from the position, so the two can never disagree.
   The API still returns `municipalityId` and `municipalityName` for each candidate.
 
 ## API field mapping (iOS app)
 
-The Web API returns the same JSON as before, built from these columns:
+The Web API returns the JSON that the iOS app expects, built from these columns:
 
 | JSON field | Source |
 |---|---|
