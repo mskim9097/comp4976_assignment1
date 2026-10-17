@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace MunicipalElections.Web.Models;
 
@@ -18,6 +19,12 @@ public class MunicipalityFormViewModel
 
     [StringLength(2000)]
     public string? Description { get; set; }
+
+    [Display(Name = "Municipality logo")]
+    public IFormFile? LogoUpload { get; set; }
+
+    [BindNever]
+    public string? CurrentLogoFileName { get; set; }
 }
 
 public class MunicipalityAdminViewModel

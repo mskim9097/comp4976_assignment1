@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace MunicipalElections.Web.Services;
 
-public static class CandidateImageStorage
+public static class ImageUploadStorage
 {
     public const long MaximumFileSize = 5 * 1024 * 1024;
 
@@ -15,7 +15,8 @@ public static class CandidateImageStorage
         [".webp"] = ("image/webp", "RIFF"u8.ToArray())
     };
 
-    public static async Task<string?> SaveAsync(IFormFile? upload, string webRootPath, CancellationToken cancellationToken = default)
+    public static async Task<string?> SaveAsync(
+        IFormFile? upload, string webRootPath, string imageFolder, CancellationToken cancellationToken = default)
     {
         if (upload is null || upload.Length == 0)
         {
@@ -59,7 +60,7 @@ public static class CandidateImageStorage
         }
 
         var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-        var imageDirectory = Path.Combine(webRootPath, "images", "candidates");
+        var imageDirectory = GetImageDirectory(webRootPath, imageFolder);
         Directory.CreateDirectory(imageDirectory);
 
         var destination = Path.Combine(imageDirectory, fileName);
@@ -68,7 +69,7 @@ public static class CandidateImageStorage
         return fileName;
     }
 
-    public static void DeleteUploaded(string? fileName, string webRootPath)
+    public static void DeleteUploaded(string? fileName, string webRootPath, string imageFolder)
     {
         if (fileName is null ||
             !string.Equals(Path.GetFileName(fileName), fileName, StringComparison.Ordinal) ||
@@ -78,11 +79,21 @@ public static class CandidateImageStorage
             return;
         }
 
-        var imagePath = Path.Combine(webRootPath, "images", "candidates", fileName);
+        var imagePath = Path.Combine(GetImageDirectory(webRootPath, imageFolder), fileName);
         if (File.Exists(imagePath))
         {
             File.Delete(imagePath);
         }
+    }
+
+    private static string GetImageDirectory(string webRootPath, string imageFolder)
+    {
+        if (imageFolder is not ("candidates" or "logos"))
+        {
+            throw new ArgumentOutOfRangeException(nameof(imageFolder), "Unsupported image folder.");
+        }
+
+        return Path.Combine(webRootPath, "images", imageFolder);
     }
 
     private static bool HasValidSignature(string extension, byte[] signature, byte[] header)

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MunicipalElections.Web.Data;
 using MunicipalElections.Web.Models;
+using MunicipalElections.Web.Services;
 
 namespace MunicipalElections.Web.Controllers;
 
@@ -11,7 +12,9 @@ namespace MunicipalElections.Web.Controllers;
 public class SuperAdminController(
     ApplicationDbContext context,
     UserManager<ApplicationUser> userManager,
-    RoleManager<IdentityRole> roleManager) : Controller
+    RoleManager<IdentityRole> roleManager,
+    IWebHostEnvironment environment,
+    ILogger<SuperAdminController> logger) : Controller
 {
     public async Task<IActionResult> Index()
     {
@@ -46,6 +49,18 @@ public class SuperAdminController(
             return View("MunicipalityForm", model);
         }
 
+        string? logoFileName;
+        try
+        {
+            logoFileName = await ImageUploadStorage.SaveAsync(
+                model.LogoUpload, GetWebRootPath(), "logos", HttpContext.RequestAborted);
+        }
+        catch (InvalidDataException exception)
+        {
+            ModelState.AddModelError(nameof(model.LogoUpload), exception.Message);
+            return View("MunicipalityForm", model);
+        }
+
         var roleName = DbSeeder.AdminRoleNameFor(model.Name.Trim());
         var createdRole = false;
         if (!await roleManager.RoleExistsAsync(roleName))
@@ -54,6 +69,7 @@ public class SuperAdminController(
             if (!roleResult.Succeeded)
             {
                 AddIdentityErrors(roleResult);
+                DeleteMunicipalityLogo(logoFileName);
                 return View("MunicipalityForm", model);
             }
             createdRole = true;
@@ -65,24 +81,39 @@ public class SuperAdminController(
             Province = model.Province.Trim(),
             ElectionDate = model.ElectionDate,
             Description = model.Description?.Trim(),
+            LogoFileName = logoFileName,
             AdminRoleName = roleName
         };
         context.Municipalities.Add(municipality);
 
+        var municipalitySaved = false;
         try
         {
             await context.SaveChangesAsync();
+            municipalitySaved = true;
         }
         catch (DbUpdateException)
         {
             if (createdRole)
             {
-                await roleManager.DeleteAsync(await roleManager.FindByNameAsync(roleName) ??
-                    throw new InvalidOperationException($"Role '{roleName}' disappeared while creating a municipality."));
+                var role = await roleManager.FindByNameAsync(roleName)
+                    ?? throw new InvalidOperationException($"Role '{roleName}' disappeared while creating a municipality.");
+                var deleteRoleResult = await roleManager.DeleteAsync(role);
+                if (!deleteRoleResult.Succeeded)
+                {
+                    AddIdentityErrors(deleteRoleResult);
+                }
             }
 
             ModelState.AddModelError(nameof(model.Name), "A municipality with this name already exists.");
             return View("MunicipalityForm", model);
+        }
+        finally
+        {
+            if (!municipalitySaved)
+            {
+                DeleteMunicipalityLogo(logoFileName);
+            }
         }
 
         TempData["Success"] = $"Municipality '{municipality.Name}' created.";
@@ -104,7 +135,8 @@ public class SuperAdminController(
             Name = municipality.Name,
             Province = municipality.Province,
             ElectionDate = municipality.ElectionDate,
-            Description = municipality.Description
+            Description = municipality.Description,
+            CurrentLogoFileName = municipality.LogoFileName
         });
     }
 
@@ -112,30 +144,62 @@ public class SuperAdminController(
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditMunicipality(MunicipalityFormViewModel model)
     {
-        if (!ModelState.IsValid)
-        {
-            return View("MunicipalityForm", model);
-        }
-
         var municipality = await context.Municipalities.FindAsync(model.MunicipalityId);
         if (municipality is null)
         {
             return NotFound();
         }
 
+        model.CurrentLogoFileName = municipality.LogoFileName;
+        if (!ModelState.IsValid)
+        {
+            return View("MunicipalityForm", model);
+        }
+
+        string? newLogoFileName;
+        try
+        {
+            newLogoFileName = await ImageUploadStorage.SaveAsync(
+                model.LogoUpload, GetWebRootPath(), "logos", HttpContext.RequestAborted);
+        }
+        catch (InvalidDataException exception)
+        {
+            ModelState.AddModelError(nameof(model.LogoUpload), exception.Message);
+            return View("MunicipalityForm", model);
+        }
+
+        var oldLogoFileName = municipality.LogoFileName;
         municipality.Name = model.Name.Trim();
         municipality.Province = model.Province.Trim();
         municipality.ElectionDate = model.ElectionDate;
         municipality.Description = model.Description?.Trim();
+        if (newLogoFileName is not null)
+        {
+            municipality.LogoFileName = newLogoFileName;
+        }
 
+        var municipalitySaved = false;
         try
         {
             await context.SaveChangesAsync();
+            municipalitySaved = true;
         }
         catch (DbUpdateException)
         {
             ModelState.AddModelError(nameof(model.Name), "A municipality with this name already exists.");
             return View("MunicipalityForm", model);
+        }
+        finally
+        {
+            if (!municipalitySaved)
+            {
+                DeleteMunicipalityLogo(newLogoFileName);
+            }
+        }
+
+        if (newLogoFileName is not null)
+        {
+            DeleteMunicipalityLogo(oldLogoFileName);
         }
 
         TempData["Success"] = $"Municipality '{municipality.Name}' updated.";
@@ -288,6 +352,25 @@ public class SuperAdminController(
         foreach (var error in result.Errors)
         {
             ModelState.AddModelError(string.Empty, error.Description);
+        }
+    }
+
+    private string GetWebRootPath() =>
+        environment.WebRootPath ?? Path.Combine(environment.ContentRootPath, "wwwroot");
+
+    private void DeleteMunicipalityLogo(string? fileName)
+    {
+        try
+        {
+            ImageUploadStorage.DeleteUploaded(fileName, GetWebRootPath(), "logos");
+        }
+        catch (IOException exception)
+        {
+            logger.LogError(exception, "Could not remove uploaded municipality logo {FileName}.", fileName);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            logger.LogError(exception, "Could not remove uploaded municipality logo {FileName}.", fileName);
         }
     }
 }

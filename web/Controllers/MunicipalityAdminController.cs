@@ -223,7 +223,8 @@ public class MunicipalityAdminController(
         string? photoFileName;
         try
         {
-            photoFileName = await CandidateImageStorage.SaveAsync(model.PhotoUpload, GetWebRootPath(), HttpContext.RequestAborted);
+            photoFileName = await ImageUploadStorage.SaveAsync(
+                model.PhotoUpload, GetWebRootPath(), "candidates", HttpContext.RequestAborted);
         }
         catch (InvalidDataException exception)
         {
@@ -309,7 +310,8 @@ public class MunicipalityAdminController(
         string? newPhotoFileName;
         try
         {
-            newPhotoFileName = await CandidateImageStorage.SaveAsync(model.PhotoUpload, GetWebRootPath(), HttpContext.RequestAborted);
+            newPhotoFileName = await ImageUploadStorage.SaveAsync(
+                model.PhotoUpload, GetWebRootPath(), "candidates", HttpContext.RequestAborted);
         }
         catch (InvalidDataException exception)
         {
@@ -445,7 +447,7 @@ public class MunicipalityAdminController(
     {
         try
         {
-            CandidateImageStorage.DeleteUploaded(fileName, GetWebRootPath());
+            ImageUploadStorage.DeleteUploaded(fileName, GetWebRootPath(), "candidates");
         }
         catch (IOException exception)
         {
