@@ -1,0 +1,123 @@
+@model CandidateDirectoryViewModel
+@{
+    ViewData["Title"] = "Candidates";
+}
+
+<div class="mb-4">
+    <h1>Candidate Directory</h1>
+    <p class="text-muted mb-0">Browse candidates and filter by municipality, position, or keyword.</p>
+</div>
+
+<section class="card card-body mb-4" aria-labelledby="preferred-candidates-heading">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h2 id="preferred-candidates-heading" class="h4 mb-1">My preferred candidates</h2>
+            <p class="text-muted mb-0">Saved only in this browser on this device. No sign-in required.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span id="preferred-candidate-count" class="badge text-bg-secondary" aria-live="polite">0 selected</span>
+            <div class="form-check mb-0">
+                <input id="include-candidate-photos" class="form-check-input" type="checkbox" checked />
+                <label class="form-check-label" for="include-candidate-photos">Print photos</label>
+            </div>
+            <button id="print-preferred-candidates" type="button" class="btn btn-primary btn-sm" disabled>Print guide</button>
+        </div>
+    </div>
+    <div id="preferred-candidate-status" class="alert alert-danger d-none" role="alert"></div>
+    <p id="preferred-candidate-empty" class="text-muted mb-0">You have not selected any candidates yet.</p>
+    <ul id="preferred-candidate-list" class="list-unstyled row row-cols-1 row-cols-md-2 g-3 mb-0"></ul>
+</section>
+
+<section id="candidate-print-guide" class="candidate-print-guide"
+         data-municipality-election-dates="@System.Text.Json.JsonSerializer.Serialize(Model.MunicipalityElectionDates)"
+         aria-label="Preferred candidate print guide">
+    <header class="candidate-print-header">
+        <h1>Preferred Candidate Guide</h1>
+        <p>Print date: <time id="candidate-print-date"></time></p>
+    </header>
+    <div id="candidate-print-groups"></div>
+</section>
+
+<form asp-action="Index" method="get" class="card card-body mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6 col-lg-4">
+            <label asp-for="Search" class="form-label"></label>
+            <input asp-for="Search" class="form-control" placeholder="Name, profile, or email" />
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <label asp-for="MunicipalityId" class="form-label"></label>
+            <select asp-for="MunicipalityId" asp-items="Model.Municipalities" class="form-select">
+                <option value="">All municipalities</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <label asp-for="PositionId" class="form-label"></label>
+            <select asp-for="PositionId" asp-items="Model.Positions" class="form-select">
+                <option value="">All positions</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">Filter</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+        </div>
+    </div>
+</form>
+
+<p class="text-muted">@Model.Candidates.Count candidate(s)</p>
+@if (Model.Candidates.Count == 0)
+{
+    <div class="alert alert-info">No candidates match these filters.</div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+    @foreach (var candidate in Model.Candidates)
+    {
+        <div class="col">
+            <article class="card h-100 candidate-directory-card"
+                     data-candidate-id="@candidate.CandidateId"
+                     data-candidate-name="@candidate.Name"
+                     data-candidate-position="@candidate.Position!.Name"
+                     data-candidate-municipality="@candidate.Position.Municipality!.Name"
+                     data-candidate-election-date="@candidate.Position.Municipality.ElectionDate.ToString("yyyy-MM-dd")"
+                     data-candidate-profile="@candidate.Profile"
+                     data-candidate-email="@candidate.Email"
+                     data-candidate-website="@candidate.Website"
+                     data-candidate-photo="@(string.IsNullOrWhiteSpace(candidate.PhotoFileName) ? "" : Url.Content($"~/images/candidates/{Uri.EscapeDataString(candidate.PhotoFileName)}"))">
+                @if (!string.IsNullOrWhiteSpace(candidate.PhotoFileName))
+                {
+                    <img src="@Url.Content($"~/images/candidates/{Uri.EscapeDataString(candidate.PhotoFileName)}")"
+                         alt="Photo of @candidate.Name" class="card-img-top"
+                         style="height: 16rem; object-fit: cover;" />
+                }
+                <div class="card-body">
+                    <h2 class="h5 card-title">@candidate.Name</h2>
+                    <p class="small text-muted mb-2">
+                        @candidate.Position!.Name · @candidate.Position.Municipality!.Name
+                    </p>
+                    @if (!string.IsNullOrWhiteSpace(candidate.Profile))
+                    {
+                        <p class="card-text">@candidate.Profile</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(candidate.Email))
+                    {
+                        <p class="mb-1"><a href="mailto:@candidate.Email">@candidate.Email</a></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(candidate.Website))
+                    {
+                        <p class="mb-0"><a href="@candidate.Website" target="_blank" rel="noopener noreferrer">Website</a></p>
+                    }
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-3 preferred-candidate-toggle">
+                        Add to preferred candidates
+                    </button>
+                </div>
+            </article>
+        </div>
+    }
+
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/preferred-candidates.js" asp-append-version="true"></script>
+}

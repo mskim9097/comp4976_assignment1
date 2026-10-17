@@ -29,3 +29,94 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.candidate-print-guide {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+
+  body {
+    margin: 0;
+    color: #000;
+    background: #fff;
+    font-size: 11pt;
+  }
+
+  body > header,
+  body > footer,
+  main[role="main"] > :not(#candidate-print-guide) {
+    display: none !important;
+  }
+
+  body > .container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #candidate-print-guide {
+    position: static !important;
+    display: block !important;
+    width: 100%;
+    color: #000;
+    font-family: Georgia, "Times New Roman", serif;
+  }
+
+  body.candidate-print-without-photos .candidate-print-photo {
+    display: none !important;
+  }
+
+  .candidate-print-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #222;
+  }
+
+  .candidate-print-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 24pt;
+  }
+
+  .candidate-print-header p,
+  .candidate-print-election-date {
+    margin: 0;
+  }
+
+  .candidate-print-municipality {
+    margin: 0 0 1.5rem;
+    break-inside: avoid;
+  }
+
+  .candidate-print-municipality > h2 {
+    margin: 0 0 0.25rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #888;
+    font-size: 17pt;
+  }
+
+  .candidate-print-entry {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.75rem 0;
+    break-inside: avoid;
+  }
+
+  .candidate-print-photo {
+    width: 1in;
+    height: 1in;
+    object-fit: cover;
+    border: 1px solid #aaa;
+    print-color-adjust: exact;
+  }
+
+  .candidate-print-entry h3,
+  .candidate-print-entry p {
+    margin: 0.15rem 0;
+  }
+}

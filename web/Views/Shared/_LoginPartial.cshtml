@@ -1,10 +1,41 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using MunicipalElections.Web.Data
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext DbContext
+
+@{
+    var isMunicipalityAdmin = false;
+    if (SignInManager.IsSignedIn(User) && !User.IsInRole("Super Admin"))
+    {
+        var currentUser = await UserManager.GetUserAsync(User);
+        if (currentUser is not null)
+        {
+            var roles = await UserManager.GetRolesAsync(currentUser);
+            isMunicipalityAdmin = await DbContext.Municipalities.AnyAsync(m => roles.Contains(m.AdminRoleName));
+        }
+    }
+}
 
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
+    @if (User.IsInRole("Super Admin"))
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="SuperAdmin" asp-action="Index">Super Admin</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="MunicipalityAdmin" asp-action="Index">Municipality Admin</a>
+        </li>
+    }
+    else if (isMunicipalityAdmin)
+    {
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-area="" asp-controller="MunicipalityAdmin" asp-action="Index">Municipality Admin</a>
+        </li>
+    }
     <li class="nav-item">
         <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name!</a>
     </li>

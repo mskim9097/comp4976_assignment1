@@ -1,0 +1,61 @@
+@model MunicipalityCandidateFormViewModel
+@{
+    var isEdit = Model.CandidateId != 0;
+    ViewData["Title"] = isEdit ? "Edit Candidate" : "Add Candidate";
+}
+
+<h1>@ViewData["Title"]</h1>
+<form asp-action="@(isEdit ? "EditCandidate" : "CreateCandidate")" method="post" enctype="multipart/form-data" class="mt-4" style="max-width: 42rem;">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <input asp-for="CandidateId" type="hidden" />
+    <div class="mb-3">
+        <label asp-for="PositionId" class="form-label"></label>
+        <select asp-for="PositionId" asp-items="ViewBag.Positions" class="form-select"></select>
+        <span asp-validation-for="PositionId" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Profile" class="form-label"></label>
+        <textarea asp-for="Profile" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Profile" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Website" class="form-label"></label>
+        <input asp-for="Website" class="form-control" type="url" />
+        <span asp-validation-for="Website" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" type="email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.CurrentPhotoFileName))
+    {
+        <div class="mb-3">
+            <label class="form-label">Current photo</label>
+            <div>
+                <img src="@Url.Content($"~/images/candidates/{Uri.EscapeDataString(Model.CurrentPhotoFileName)}")"
+                     alt="Current photo of @Model.Name" class="img-thumbnail"
+                     style="width: 10rem; height: 10rem; object-fit: cover;" />
+            </div>
+            <div class="form-text">Choose another image below to replace this photo.</div>
+        </div>
+    }
+    <div class="mb-3">
+        <label asp-for="PhotoUpload" class="form-label"></label>
+        <input asp-for="PhotoUpload" class="form-control" type="file"
+               accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp" />
+        <span asp-validation-for="PhotoUpload" class="text-danger"></span>
+        <div class="form-text">Optional. PNG, JPEG, GIF, or WebP; maximum 5 MB.</div>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

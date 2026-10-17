@@ -1,0 +1,44 @@
+@model CreateMunicipalityAdminViewModel
+@{
+    ViewData["Title"] = "Create Municipality Admin";
+}
+
+<h1>Create Municipality Admin</h1>
+<p class="text-muted">This creates a sign-in account and grants it administrator access to the selected municipality.</p>
+<form asp-action="CreateAdmin" method="post" class="mt-4" style="max-width: 42rem;">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <div class="mb-3">
+        <label asp-for="MunicipalityId" class="form-label"></label>
+        <select asp-for="MunicipalityId" asp-items="ViewBag.Municipalities" class="form-select">
+            <option value="0">Select a municipality</option>
+        </select>
+        <span asp-validation-for="MunicipalityId" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="UserName" class="form-label"></label>
+        <input asp-for="UserName" class="form-control" autocomplete="username" />
+        <span asp-validation-for="UserName" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" autocomplete="name" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" autocomplete="email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control" autocomplete="new-password" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+        <div class="form-text">Minimum 6 characters.</div>
+    </div>
+    <button type="submit" class="btn btn-primary">Create admin</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
