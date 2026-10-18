@@ -85,6 +85,8 @@ else
                                                 }
                                                 <span>@candidate.Name</span>
                                                 <a class="btn btn-sm btn-outline-secondary"
+                                                   asp-action="CandidateDetails" asp-route-id="@candidate.CandidateId">Details</a>
+                                                <a class="btn btn-sm btn-outline-secondary"
                                                    asp-action="EditCandidate" asp-route-id="@candidate.CandidateId">Edit</a>
                                                 <form asp-action="DeleteCandidate" asp-route-id="@candidate.CandidateId" method="post">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger"

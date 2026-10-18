@@ -9,6 +9,29 @@ namespace MunicipalElections.Web.Controllers;
 
 public class CandidateDirectoryController(ApplicationDbContext context) : Controller
 {
+    // GET: CandidateDirectory/Details/5 - one candidate's profile
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id is null)
+        {
+            return NotFound();
+        }
+
+        var candidate = await context.Candidates
+            .AsNoTracking()
+            .Include(c => c.Position!)
+                .ThenInclude(p => p.Municipality)
+            .FirstOrDefaultAsync(c => c.CandidateId == id);
+        if (candidate is null)
+        {
+            return NotFound();
+        }
+
+        return View(candidate);
+    }
+
     [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> Index(CandidateDirectoryViewModel filters)

@@ -107,9 +107,12 @@ else
                     {
                         <p class="mb-0"><a href="@candidate.Website" target="_blank" rel="noopener noreferrer">Website</a></p>
                     }
-                    <button type="button" class="btn btn-outline-primary btn-sm mt-3 preferred-candidate-toggle">
-                        Add to preferred candidates
-                    </button>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <a class="btn btn-primary btn-sm" asp-action="Details" asp-route-id="@candidate.CandidateId">View profile</a>
+                        <button type="button" class="btn btn-outline-primary btn-sm preferred-candidate-toggle">
+                            Add to preferred candidates
+                        </button>
+                    </div>
                 </div>
             </article>
         </div>

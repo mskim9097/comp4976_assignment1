@@ -6,8 +6,9 @@ using MunicipalElections.Web.Data;
 using MunicipalElections.Web.Models;
 using MunicipalElections.Web.Services;
 
-namespace MunicipalElections.Web.Controllers;
+namespace MunicipalElections.Web.Areas.Admin.Controllers;
 
+[Area("Admin")]
 [Authorize(Roles = DbSeeder.SuperAdminRole)]
 public class SuperAdminController(
     ApplicationDbContext context,
@@ -325,6 +326,7 @@ public class SuperAdminController(
             }
         }
 
+        var logoFileName = municipality.LogoFileName;
         context.Municipalities.Remove(municipality);
         try
         {
@@ -336,6 +338,7 @@ public class SuperAdminController(
             return RedirectToAction(nameof(Index));
         }
 
+        DeleteMunicipalityLogo(logoFileName);
         TempData["Success"] = $"Municipality '{municipality.Name}' deleted.";
         return RedirectToAction(nameof(Index));
     }

@@ -120,3 +120,24 @@ body {
     margin: 0.15rem 0;
   }
 }
+
+/* Dark mode (Bootstrap color modes: <html data-bs-theme="dark">) */
+[data-bs-theme="dark"] .btn:focus,
+[data-bs-theme="dark"] .btn:active:focus,
+[data-bs-theme="dark"] .btn-link.nav-link:focus,
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem var(--bs-body-bg), 0 0 0 0.25rem #258cfb;
+}
+
+[data-bs-theme="dark"] .border-top {
+  border-top-color: var(--bs-border-color) !important;
+}
+
+[data-bs-theme="dark"] .border-bottom {
+  border-bottom-color: var(--bs-border-color) !important;
+}
+
+[data-bs-theme="dark"] a:not(.btn):not(.nav-link):not(.navbar-brand):not(.page-link) {
+  color: #6ea8fe;
+}

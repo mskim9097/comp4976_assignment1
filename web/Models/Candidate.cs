@@ -9,7 +9,7 @@ public class Candidate
     [Required, StringLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    [StringLength(2000, ErrorMessage = "The profile can be at most 2000 characters.")]
+    [StringLength(2000, ErrorMessage = "The biography / profile can be at most {1} characters.")]
     [Display(Name = "Biography / Profile")]
     public string? Profile { get; set; }
 

@@ -3,7 +3,7 @@
     ViewData["Title"] = "Municipal Elections Guide";
 }
 
-<section class="p-4 p-lg-5 mb-5 bg-light rounded-3">
+<section class="p-4 p-lg-5 mb-5 bg-body-tertiary rounded-3">
     <div class="container-fluid py-2">
         <p class="text-uppercase text-primary fw-semibold mb-2">Your local election, made easier</p>
         <h1 class="display-5 fw-bold">Get to know your candidates.</h1>
@@ -56,6 +56,11 @@
                            asp-controller="CandidateDirectory" asp-action="Index"
                            asp-route-MunicipalityId="@municipality.MunicipalityId">
                             View candidates
+                        </a>
+                        <a class="btn btn-outline-secondary"
+                           asp-controller="Positions" asp-action="Index"
+                           asp-route-municipalityId="@municipality.MunicipalityId">
+                            View positions
                         </a>
                     </div>
                 </article>

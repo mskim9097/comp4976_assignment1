@@ -7,10 +7,10 @@ One repository for both courses. The MVC site and the Web API are one project wi
 
 | Folder | What it is |
 |---|---|
-| `web/` | One ASP.NET Core project: the MVC site (COMP4976: public site, Admin area, cookie login) and the Web API under `/api` (COMP4977: JWT, Swagger). EF Core Code First, one SQLite database, Identity |
+| `web/` | One ASP.NET Core project: the MVC site (COMP4976: public site, Admin area at `/Admin`, cookie login, dark mode) and the Web API under `/api` (COMP4977: JWT, Swagger). EF Core Code First, one SQLite database, Identity |
 | `ios/` | SwiftUI app "Municipal Elections Companion" (COMP4977) |
 | `docs/` | `readme.txt` (COMP4976), ERD, architecture diagram, [API documentation](docs/api.md) |
-| `.github/` | Copilot instructions / prompts / skills (COMP4976) and the Azure deployment workflow; must stay at the repo root |
+| `.github/` | Copilot instructions, prompts and skills (COMP4976) and the Azure deployment workflow; must stay at the repo root |
 
 Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global dotnet-ef`; Xcode for the iOS app.
 
@@ -52,15 +52,19 @@ Pushes to `main` that change `web/` redeploy the app to Azure automatically.
 ## Submission
 
 The instructor asked us not to split the ASP.NET project: the same project is submitted twice, once in the
-COMP4976 (.NET) D2L dropbox and once in the COMP4977 (iOS) dropbox. We submit one zip of the whole repository
-(`web/`, `ios/`, `docs/`, `.github/`, solution and settings files) to both, plus a project document for each course.
+COMP4976 (.NET) D2L dropbox and once in the COMP4977 (iOS) dropbox. The **iOS project must not be included in the
+COMP4976 submission**; the COMP4977 submission contains everything.
 
-Create the zip from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`,
+Create the zips from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`,
 `xcuserdata`, class material):
 
 ```bash
-git archive --format=zip --prefix=MunicipalElections/ -o MunicipalElections.zip main
+# COMP4976 (.NET): everything except the iOS app
+git archive --format=zip --prefix=MunicipalElections/ -o MunicipalElections-COMP4976.zip main -- . ':(exclude)ios'
+
+# COMP4977 (iOS): the complete repository, including ios/
+git archive --format=zip --prefix=MunicipalElections/ -o MunicipalElections-COMP4977.zip main
 ```
 
-Required files: `docs/readme.txt` (COMP4976), the Copilot files in `.github/`, and the project document with the ERD,
-screenshots, the Azure URL and the GitHub URL.
+Each zip needs `docs/readme.txt`, the Copilot files in `.github/`, and its own project document (ERD, screenshots, the Azure
+URL and the GitHub URL). A few links in the README and docs point to `ios/`; they simply do not resolve inside the COMP4976 zip.

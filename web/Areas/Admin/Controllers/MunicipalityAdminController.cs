@@ -7,12 +7,13 @@ using MunicipalElections.Web.Data;
 using MunicipalElections.Web.Models;
 using MunicipalElections.Web.Services;
 
-namespace MunicipalElections.Web.Controllers;
+namespace MunicipalElections.Web.Areas.Admin.Controllers;
 
+[Area("Admin")]
 [Authorize]
 public class MunicipalityAdminController(
     ApplicationDbContext context,
-    UserManager<ApplicationUser> userManager,
+    AdminAccess adminAccess,
     IWebHostEnvironment environment,
     ILogger<MunicipalityAdminController> logger) : Controller
 {
@@ -262,6 +263,20 @@ public class MunicipalityAdminController(
         return RedirectToAction(nameof(Index));
     }
 
+    // View one candidate (only candidates of municipalities the administrator manages).
+    [HttpGet]
+    public async Task<IActionResult> CandidateDetails(int id)
+    {
+        var candidate = await FindManagedCandidateAsync(id);
+        if (candidate is null)
+        {
+            return NotFound();
+        }
+
+        await context.Entry(candidate.Position!).Reference(p => p.Municipality).LoadAsync();
+        return View(candidate);
+    }
+
     [HttpGet]
     public async Task<IActionResult> EditCandidate(int id)
     {
@@ -379,34 +394,8 @@ public class MunicipalityAdminController(
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task<List<Municipality>> GetManagedMunicipalitiesAsync()
-    {
-        if (User.IsInRole(DbSeeder.SuperAdminRole))
-        {
-            return await context.Municipalities
-                .AsNoTracking()
-                .OrderBy(m => m.Name)
-                .ToListAsync();
-        }
-
-        var user = await userManager.GetUserAsync(User);
-        if (user is null)
-        {
-            return [];
-        }
-
-        var roleNames = await userManager.GetRolesAsync(user);
-        if (roleNames.Count == 0)
-        {
-            return [];
-        }
-
-        return await context.Municipalities
-            .AsNoTracking()
-            .Where(m => roleNames.Contains(m.AdminRoleName))
-            .OrderBy(m => m.Name)
-            .ToListAsync();
-    }
+    private Task<List<Municipality>> GetManagedMunicipalitiesAsync() =>
+        adminAccess.GetManagedMunicipalitiesAsync(User);
 
     private async Task<List<Position>> GetManagedPositionsAsync()
     {

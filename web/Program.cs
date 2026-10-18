@@ -48,6 +48,7 @@ if (jwt.Key.Length < 32)
         "Jwt:Key must be set to a random string of at least 32 characters (appsettings.Development.json or the Jwt__Key environment variable).");
 }
 builder.Services.AddSingleton(jwt);
+builder.Services.AddScoped<MunicipalElections.Web.Services.AdminAccess>();
 builder.Services.AddAuthentication()
     .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
     {
@@ -107,6 +108,12 @@ app.UseSwaggerUI(options =>
 app.MapGet("/api", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
 app.MapStaticAssets();
+
+// Admin area (dashboard, municipalities, positions, candidates): /Admin/...
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}")
+    .WithStaticAssets();
 
 app.MapControllerRoute(
     name: "default",

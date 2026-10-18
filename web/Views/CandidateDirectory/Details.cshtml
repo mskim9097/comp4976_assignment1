@@ -1,0 +1,75 @@
+@model Candidate
+@{
+    ViewData["Title"] = Model.Name;
+    var municipality = Model.Position!.Municipality!;
+    var photoUrl = string.IsNullOrWhiteSpace(Model.PhotoFileName)
+        ? ""
+        : Url.Content($"~/images/candidates/{Uri.EscapeDataString(Model.PhotoFileName)}");
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Candidates</a></li>
+        <li class="breadcrumb-item"><a asp-action="Index" asp-route-MunicipalityId="@municipality.MunicipalityId">@municipality.Name</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+    </ol>
+</nav>
+
+<article id="candidate-details" class="row g-4"
+         data-candidate-id="@Model.CandidateId"
+         data-candidate-name="@Model.Name"
+         data-candidate-position="@Model.Position.Name"
+         data-candidate-municipality="@municipality.Name"
+         data-candidate-election-date="@municipality.ElectionDate.ToString("yyyy-MM-dd")"
+         data-candidate-profile="@Model.Profile"
+         data-candidate-email="@Model.Email"
+         data-candidate-website="@Model.Website"
+         data-candidate-photo="@photoUrl">
+    <div class="col-12 col-md-4">
+        @if (photoUrl != "")
+        {
+            <img src="@photoUrl" alt="Photo of @Model.Name" class="img-fluid rounded w-100" style="max-height: 24rem; object-fit: cover;" />
+        }
+        else
+        {
+            <div class="border rounded d-flex align-items-center justify-content-center text-muted" style="height: 16rem;">No photo</div>
+        }
+    </div>
+    <div class="col-12 col-md-8">
+        <h1 class="mb-1">@Model.Name</h1>
+        <p class="lead text-muted">@Model.Position.Name &middot; @municipality.Name</p>
+
+        <dl class="row">
+            <dt class="col-sm-4">Municipality</dt>
+            <dd class="col-sm-8">@municipality.Name, @municipality.Province</dd>
+            <dt class="col-sm-4">Position</dt>
+            <dd class="col-sm-8">@Model.Position.Name (@Model.Position.SeatsAvailable @(Model.Position.SeatsAvailable == 1 ? "seat" : "seats"))</dd>
+            <dt class="col-sm-4">Election date</dt>
+            <dd class="col-sm-8">@municipality.ElectionDate.ToString("MMMM d, yyyy")</dd>
+            @if (!string.IsNullOrWhiteSpace(Model.Email))
+            {
+                <dt class="col-sm-4">Email</dt>
+                <dd class="col-sm-8"><a href="mailto:@Model.Email">@Model.Email</a></dd>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.Website))
+            {
+                <dt class="col-sm-4">Website</dt>
+                <dd class="col-sm-8"><a href="@Model.Website" target="_blank" rel="noopener noreferrer">@Model.Website</a></dd>
+            }
+        </dl>
+
+        <h2 class="h5">Biography</h2>
+        <p>@(string.IsNullOrWhiteSpace(Model.Profile) ? "No biography provided." : Model.Profile)</p>
+
+        <div id="preferred-candidate-details-status" class="alert alert-danger d-none" role="alert"></div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <button id="preferred-candidate-details-toggle" type="button" class="btn btn-outline-primary">Add to preferred candidates</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Back to candidates</a>
+        </div>
+        <p class="text-muted small mt-2 mb-0">Your preferred list is saved only in this browser. Print it from the candidate directory.</p>
+    </div>
+</article>
+
+@section Scripts {
+    <script src="~/js/candidate-details.js" asp-append-version="true"></script>
+}

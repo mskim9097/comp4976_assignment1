@@ -47,7 +47,7 @@ public class MunicipalityCandidateFormViewModel
     [Required, StringLength(100)]
     public string Name { get; set; } = string.Empty;
 
-    [StringLength(2000)]
+    [StringLength(2000, ErrorMessage = "The biography / profile can be at most {1} characters.")]
     [Display(Name = "Biography / Profile")]
     public string? Profile { get; set; }
 

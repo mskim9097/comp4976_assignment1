@@ -1,0 +1,68 @@
+@model PositionBrowseViewModel
+@{
+    ViewData["Title"] = "Positions";
+}
+
+<div class="mb-4">
+    <h1>Elected Positions</h1>
+    <p class="text-muted mb-0">The positions up for election in each municipality and how many candidates are running.</p>
+</div>
+
+<form asp-action="Index" method="get" class="card card-body mb-4">
+    <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6 col-lg-4">
+            <label for="municipalityId" class="form-label">Municipality</label>
+            <select id="municipalityId" name="municipalityId" asp-items="Model.Municipalities" class="form-select">
+                <option value="">All municipalities</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-grow-1">Show</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+        </div>
+    </div>
+</form>
+
+@foreach (var group in Model.Groups)
+{
+    <section class="mb-4" aria-labelledby="muni-@group.Municipality.MunicipalityId">
+        <h2 id="muni-@group.Municipality.MunicipalityId" class="h4">
+            @group.Municipality.Name
+            <small class="text-muted fs-6">Election: @group.Municipality.ElectionDate.ToString("MMMM d, yyyy")</small>
+        </h2>
+        @if (group.Positions.Count == 0)
+        {
+            <div class="alert alert-info">No positions have been added for this municipality yet.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Position</th>
+                            <th scope="col">Seats</th>
+                            <th scope="col">Candidates</th>
+                            <th scope="col"><span class="visually-hidden">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in group.Positions)
+                    {
+                        <tr>
+                            <td>@item.Position.Name</td>
+                            <td>@item.Position.SeatsAvailable</td>
+                            <td>@item.CandidateCount</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" asp-controller="CandidateDirectory" asp-action="Index"
+                                   asp-route-MunicipalityId="@group.Municipality.MunicipalityId"
+                                   asp-route-PositionId="@item.Position.PositionId">View candidates</a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+}
