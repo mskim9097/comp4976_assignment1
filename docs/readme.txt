@@ -55,7 +55,8 @@ The same ASP.NET project is also submitted for COMP4977 (that zip also contains 
    e) Web API: /swagger. Log in with POST /api/auth/login, press Authorize and paste the token.
    f) iOS app (COMP4977 zip only): open ios/MunicipalElectionsCompanion in Xcode and run on a simulator.
       It uses the Azure server by default. To use a local server set the environment variable API_BASE_URL
-      (for example http://localhost:5276). Create an account on the first screen, then log in.
+      (for example http://localhost:5276). Test account on Azure: aa@aa.aa / P@$$w0rd
+      (or create your own account on the Create Account screen, password at least 6 characters).
 
 6. Azure URL
    https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net
