@@ -51,6 +51,16 @@ Pushes to `main` that change `web/` redeploy the app to Azure automatically.
 
 ## Submission
 
-Both courses are submitted from this repository (zip of the complete repository without `bin/`, `obj/`,
-`*.db`, `appsettings.Development.json`, `xcuserdata`). Required files: `docs/readme.txt` (COMP4976),
-the Copilot files in `.github/`, and the project document with ERD, screenshots and the Azure URL.
+The instructor asked us not to split the ASP.NET project: the same project is submitted twice, once in the
+COMP4976 (.NET) D2L dropbox and once in the COMP4977 (iOS) dropbox. We submit one zip of the whole repository
+(`web/`, `ios/`, `docs/`, `.github/`, solution and settings files) to both, plus a project document for each course.
+
+Create the zip from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`,
+`xcuserdata`, class material):
+
+```bash
+git archive --format=zip --prefix=MunicipalElections/ -o MunicipalElections.zip main
+```
+
+Required files: `docs/readme.txt` (COMP4976), the Copilot files in `.github/`, and the project document with the ERD,
+screenshots, the Azure URL and the GitHub URL.
