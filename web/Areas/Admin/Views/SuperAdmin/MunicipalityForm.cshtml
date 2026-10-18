@@ -1,6 +1,13 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using MunicipalElections.Web.Services
 @model MunicipalityFormViewModel
 @{
     var isEdit = Model.MunicipalityId != 0;
+    var provinceOptions = MunicipalityRules.Provinces.Select(p => new SelectListItem(p, p)).ToList();
+    if (!string.IsNullOrWhiteSpace(Model.Province) && !MunicipalityRules.IsProvince(Model.Province))
+    {
+        provinceOptions.Insert(0, new SelectListItem($"{Model.Province} (current value)", Model.Province));
+    }
     ViewData["Title"] = isEdit ? "Edit Municipality" : "Add Municipality";
 }
 
@@ -16,7 +23,9 @@
     </div>
     <div class="mb-3">
         <label asp-for="Province" class="form-label"></label>
-        <input asp-for="Province" class="form-control" />
+        <select asp-for="Province" asp-items="provinceOptions" class="form-select">
+            <option value="">Select a province or territory</option>
+        </select>
         <span asp-validation-for="Province" class="text-danger"></span>
     </div>
     <div class="mb-3">

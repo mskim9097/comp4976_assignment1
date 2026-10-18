@@ -39,12 +39,14 @@ public class SuperAdminController(
     }
 
     [HttpGet]
-    public IActionResult CreateMunicipality() => View("MunicipalityForm", new MunicipalityFormViewModel());
+    public IActionResult CreateMunicipality() =>
+        View("MunicipalityForm", new MunicipalityFormViewModel { Province = MunicipalityRules.DefaultProvince });
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateMunicipality(MunicipalityFormViewModel model)
     {
+        await ValidateMunicipalityAsync(model, currentProvince: null);
         if (!ModelState.IsValid)
         {
             return View("MunicipalityForm", model);
@@ -152,6 +154,7 @@ public class SuperAdminController(
         }
 
         model.CurrentLogoFileName = municipality.LogoFileName;
+        await ValidateMunicipalityAsync(model, currentProvince: municipality.Province);
         if (!ModelState.IsValid)
         {
             return View("MunicipalityForm", model);
@@ -341,6 +344,31 @@ public class SuperAdminController(
         DeleteMunicipalityLogo(logoFileName);
         TempData["Success"] = $"Municipality '{municipality.Name}' deleted.";
         return RedirectToAction(nameof(Index));
+    }
+
+    // Name: spaces are tidied and a name that differs only by upper/lower case from another municipality is refused
+    // (so "burnaby" cannot be added next to "Burnaby", and the two could not share one admin group).
+    // Province: must be one of the listed provinces; an older value is kept only if the municipality already has it.
+    private async Task ValidateMunicipalityAsync(MunicipalityFormViewModel model, string? currentProvince)
+    {
+        model.Name = MunicipalityRules.NormalizeName(model.Name);
+        model.Province = model.Province?.Trim() ?? string.Empty;
+
+        if (model.Province.Length > 0 && !MunicipalityRules.IsProvince(model.Province) && model.Province != currentProvince)
+        {
+            ModelState.AddModelError(nameof(model.Province), "Select a province or territory from the list.");
+        }
+
+        if (model.Name.Length > 0)
+        {
+            var lowerName = model.Name.ToLower();
+            var taken = await context.Municipalities.AnyAsync(m =>
+                m.MunicipalityId != model.MunicipalityId && m.Name.ToLower() == lowerName);
+            if (taken)
+            {
+                ModelState.AddModelError(nameof(model.Name), "A municipality with this name already exists (upper and lower case are treated as the same).");
+            }
+        }
     }
 
     private async Task<List<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>> GetMunicipalityOptionsAsync() =>
