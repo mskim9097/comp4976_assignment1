@@ -41,6 +41,7 @@ struct CandidatesView: View {
             CandidateDetailView(candidate: candidate)
         }
         .searchable(text: $viewModel.searchText, prompt: "Search candidates by name")
+        .textInputAutocapitalization(.never)
         .toolbar { filterMenu }
         .onChange(of: viewModel.selectedMunicipalityId) {
             viewModel.municipalityChanged()

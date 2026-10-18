@@ -29,8 +29,14 @@ public class AuthApiController(UserManager<ApplicationUser> userManager, JwtSett
         var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
+            // The user name is the email, so a taken email would otherwise be reported twice.
+            var emailTaken = result.Errors.Any(e => e.Code == nameof(IdentityErrorDescriber.DuplicateEmail));
             foreach (var error in result.Errors)
             {
+                if (emailTaken && error.Code == nameof(IdentityErrorDescriber.DuplicateUserName))
+                {
+                    continue;
+                }
                 ModelState.AddModelError(error.Code, error.Description);
             }
             return ValidationProblem(ModelState);
