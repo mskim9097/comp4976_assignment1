@@ -1,0 +1,110 @@
+@model SuperAdminIndexViewModel
+@{
+    ViewData["Title"] = "Super Admin";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h1>Super Admin</h1>
+        <p class="text-muted mb-0">Manage municipalities and their administrator accounts.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary" asp-action="CreateAdmin">Create admin</a>
+        <a class="btn btn-primary" asp-action="CreateMunicipality">Add municipality</a>
+    </div>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+    <div class="alert alert-success" role="status">@success</div>
+}
+@if (TempData["Error"] is string error)
+{
+    <div class="alert alert-danger" role="alert">@error</div>
+}
+
+@if (Model.Municipalities.Count == 0)
+{
+    <div class="alert alert-info">No municipalities have been created yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Municipality</th>
+                    <th scope="col">Logo</th>
+                    <th scope="col">Election date</th>
+                    <th scope="col">Positions</th>
+                    <th scope="col">Administrators</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in Model.Municipalities)
+            {
+                <tr>
+                    <th scope="row">
+                        @item.Municipality.Name
+                        <div class="text-muted fw-normal">@item.Municipality.Province</div>
+                    </th>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(item.Municipality.LogoFileName))
+                        {
+                            <img src="@Url.Content($"~/images/logos/{Uri.EscapeDataString(item.Municipality.LogoFileName)}")"
+                                 alt="@item.Municipality.Name logo" class="img-thumbnail"
+                                 style="width: 4rem; height: 4rem; object-fit: contain;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">None</span>
+                        }
+                    </td>
+                    <td>@item.Municipality.ElectionDate.ToString("yyyy-MM-dd")</td>
+                    <td>@item.PositionCount</td>
+                    <td>
+                        @if (item.Admins.Count == 0)
+                        {
+                            <span class="text-muted">None</span>
+                        }
+                        else
+                        {
+                            <ul class="list-unstyled mb-0">
+                            @foreach (var admin in item.Admins)
+                            {
+                                <li class="d-flex flex-wrap align-items-center gap-2">
+                                    <span>@(admin.Name ?? admin.UserName) <span class="text-muted">(@admin.Email)</span></span>
+                                    <form asp-action="RemoveAdmin" method="post">
+                                        <input type="hidden" name="userId" value="@admin.Id" />
+                                        <input type="hidden" name="municipalityId" value="@item.Municipality.MunicipalityId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('Remove this admin from @item.Municipality.Name?');">
+                                            Remove
+                                        </button>
+                                    </form>
+                                </li>
+                            }
+                            </ul>
+                        }
+                    </td>
+                    <td>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-action="EditMunicipality" asp-route-id="@item.Municipality.MunicipalityId">Edit</a>
+                            <a class="btn btn-sm btn-outline-primary"
+                               asp-action="CreateAdmin" asp-route-municipalityId="@item.Municipality.MunicipalityId">Add admin</a>
+                            <form asp-action="DeleteMunicipality" asp-route-id="@item.Municipality.MunicipalityId" method="post">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Delete this municipality? Municipalities with positions cannot be deleted.');">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

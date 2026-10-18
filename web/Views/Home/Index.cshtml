@@ -1,8 +1,87 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model HomeViewModel
+@{
+    ViewData["Title"] = "Municipal Elections Guide";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<section class="p-4 p-lg-5 mb-5 bg-light rounded-3">
+    <div class="container-fluid py-2">
+        <p class="text-uppercase text-primary fw-semibold mb-2">Your local election, made easier</p>
+        <h1 class="display-5 fw-bold">Get to know your candidates.</h1>
+        <p class="col-lg-8 fs-5 text-muted">
+            Explore candidate profiles by municipality and position, save the candidates you want to compare,
+            and print a personal guide to take with you.
+        </p>
+        <a class="btn btn-primary btn-lg" asp-controller="CandidateDirectory" asp-action="Index">Explore candidates</a>
+    </div>
+</section>
+
+<section aria-labelledby="municipalities-heading" class="mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+        <div>
+            <h2 id="municipalities-heading" class="h3 mb-1">Participating municipalities</h2>
+            <p class="text-muted mb-0">Browse the candidates and election information available in each community.</p>
+        </div>
+        <a asp-controller="CandidateDirectory" asp-action="Index" class="link-primary">View all candidates</a>
+    </div>
+
+    @if (Model.Municipalities.Count == 0)
+    {
+        <div class="alert alert-info">Municipality information will appear here when it is available.</div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        @foreach (var municipality in Model.Municipalities)
+        {
+            <div class="col">
+                <article class="card h-100">
+                    @if (!string.IsNullOrWhiteSpace(municipality.LogoFileName))
+                    {
+                        <img src="@Url.Content($"~/images/logos/{Uri.EscapeDataString(municipality.LogoFileName)}")"
+                             alt="@municipality.Name logo" class="card-img-top p-3"
+                             style="height: 10rem; object-fit: contain;" />
+                    }
+                    <div class="card-body">
+                        <h3 class="h5 card-title">@municipality.Name</h3>
+                        <p class="text-muted">@municipality.Province</p>
+                        @if (!string.IsNullOrWhiteSpace(municipality.Description))
+                        {
+                            <p class="card-text">@municipality.Description</p>
+                        }
+                        <p class="small mb-3">
+                            Election date: <strong>@municipality.ElectionDate.ToString("MMMM d, yyyy")</strong><br />
+                            @municipality.CandidateCount candidate(s) listed
+                        </p>
+                        <a class="btn btn-outline-primary"
+                           asp-controller="CandidateDirectory" asp-action="Index"
+                           asp-route-MunicipalityId="@municipality.MunicipalityId">
+                            View candidates
+                        </a>
+                    </div>
+                </article>
+            </div>
+        }
+        </div>
+    }
+</section>
+
+<section class="row g-3 mb-4" aria-label="How to use this guide">
+    <div class="col-md-4">
+        <div class="h-100 p-3 border rounded">
+            <h2 class="h5">1. Browse</h2>
+            <p class="mb-0">Filter candidates by municipality and position, or search profiles for topics that matter to you.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="h-100 p-3 border rounded">
+            <h2 class="h5">2. Choose</h2>
+            <p class="mb-0">Add candidates to your preferred list. Your selections stay in this browser on this device.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="h-100 p-3 border rounded">
+            <h2 class="h5">3. Take it with you</h2>
+            <p class="mb-0">Print a candidate guide with positions, election dates, and optional candidate photos.</p>
+        </div>
+    </div>
+</section>

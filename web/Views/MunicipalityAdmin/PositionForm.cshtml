@@ -1,0 +1,32 @@
+@model MunicipalityPositionFormViewModel
+@{
+    var isEdit = Model.PositionId != 0;
+    ViewData["Title"] = isEdit ? "Edit Position" : "Add Position";
+}
+
+<h1>@ViewData["Title"]</h1>
+<form asp-action="@(isEdit ? "EditPosition" : "CreatePosition")" method="post" class="mt-4" style="max-width: 42rem;">
+    <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+    <input asp-for="PositionId" type="hidden" />
+    <div class="mb-3">
+        <label asp-for="MunicipalityId" class="form-label"></label>
+        <select asp-for="MunicipalityId" asp-items="ViewBag.Municipalities" class="form-select"></select>
+        <span asp-validation-for="MunicipalityId" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="SeatsAvailable" class="form-label"></label>
+        <input asp-for="SeatsAvailable" class="form-control" />
+        <span asp-validation-for="SeatsAvailable" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

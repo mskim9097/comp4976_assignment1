@@ -88,6 +88,8 @@ else
 }
 
 app.UseHttpsRedirection();
+// Runtime-uploaded candidate images are not present in the build-time static asset manifest.
+app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
