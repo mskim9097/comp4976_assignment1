@@ -5,6 +5,11 @@ iOS app (COMP4977). Source: `erd.mmd` (Mermaid), exported image: `erd.png`.
 
 ![ERD](erd.png)
 
+Legend: `PK` primary key, `FK` foreign key, `UK` unique. Solid lines are foreign-key relationships (`||--o{` = one to many);
+"(cascade)" means that deleting the parent row also deletes the child rows. The dotted line is the link between a municipality and
+its admin group (an Identity role) by role name. Only the main columns of the Identity tables are drawn (`AspNetUsers` has more
+standard columns such as `NormalizedUserName` or `SecurityStamp`); the other Identity tables (claims, logins, tokens) are omitted.
+
 ## Tables
 
 | Table | Purpose |
@@ -28,8 +33,9 @@ iOS app (COMP4977). Source: `erd.mmd` (Mermaid), exported image: `erd.png`.
   positions and candidates of that municipality only. Creating a municipality creates its group.
 - Database table names are plural (`Municipalities`, `Positions`, `Candidates`, `SavedCandidates`); the diagram uses
   the entity names from the assignment.
-- `Candidate` has no `MunicipalityId`: it is derived from the position, so the two can never disagree.
-  The API still returns `municipalityId` and `municipalityName` for each candidate.
+- Unique rules: municipality names are unique; a position name is unique within its municipality; a user can save a candidate only once.
+- `Candidate` has no `MunicipalityId` column: the municipality of a candidate is taken from its position, so the two can never
+  disagree. The API still returns `municipalityId` and `municipalityName` for each candidate.
 
 ## API field mapping (iOS app)
 

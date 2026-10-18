@@ -4,7 +4,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>aspnet-MunicipalElections.Web-425f008b-bba9-4221-a88d-3d225c3b89d5</UserSecretsId>
   </PropertyGroup>
 
   <!-- Local settings hold secrets (JWT key) and the local database; never publish them to Azure. -->

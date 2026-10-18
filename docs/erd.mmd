@@ -1,4 +1,5 @@
 erDiagram
+    direction LR
     AspNetUsers {
         string Id PK
         string UserName
@@ -6,17 +7,17 @@ erDiagram
         string PasswordHash
         string Name
     }
-    AspNetRoles {
-        string Id PK
-        string Name
-    }
     AspNetUserRoles {
         string UserId PK, FK
         string RoleId PK, FK
     }
+    AspNetRoles {
+        string Id PK
+        string Name
+    }
     Municipality {
         int MunicipalityId PK
-        string Name
+        string Name UK
         string Province
         date ElectionDate
         string Description
@@ -25,7 +26,7 @@ erDiagram
     }
     Position {
         int PositionId PK
-        string Name
+        string Name "unique per municipality"
         int SeatsAvailable
         int MunicipalityId FK
     }
@@ -41,15 +42,14 @@ erDiagram
     }
     SavedCandidate {
         int SavedCandidateId PK
-        string UserId FK
+        string UserId FK "unique with CandidateId"
         int CandidateId FK
         datetime DateSaved
     }
-
     AspNetUsers ||--o{ AspNetUserRoles : "belongs to"
     AspNetRoles ||--o{ AspNetUserRoles : "has members"
-    AspNetRoles ||..o| Municipality : "admin group (AdminRoleName)"
-    Municipality ||--o{ Position : "has"
-    Position ||--o{ Candidate : "has"
-    AspNetUsers ||--o{ SavedCandidate : "saves"
-    Candidate ||--o{ SavedCandidate : "is saved as"
+    AspNetRoles ||..o| Municipality : "admin group (by name)"
+    Municipality ||--o{ Position : "has (cascade)"
+    Position ||--o{ Candidate : "has (cascade)"
+    AspNetUsers ||--o{ SavedCandidate : "saves (cascade)"
+    Candidate ||--o{ SavedCandidate : "saved as (cascade)"

@@ -67,6 +67,8 @@ builder.Services.AddAuthentication()
     });
 
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.RazorPages.RazorPagesOptions>(options =>
+    options.Conventions.Add(new MunicipalElections.Web.Services.HideUnusedIdentityPages()));
 builder.Services.AddApiDocumentation();
 
 var app = builder.Build();

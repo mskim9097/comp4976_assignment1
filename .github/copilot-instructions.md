@@ -6,7 +6,7 @@ BCIT COMP4976 (ASP.NET Core MVC) and COMP4977 (iOS + Web API), Assignment 1. One
 - `web/`: one ASP.NET Core (.NET 10) project. It serves the public MVC site, the Admin area and the JSON Web API.
   - `Controllers/`: public MVC controllers (`Home`, `CandidateDirectory`, `Positions`). `Controllers/Api/`: JSON API (JWT), used by the iOS app.
   - `Areas/Admin/`: the Admin area (`Dashboard`, `SuperAdmin`, `MunicipalityAdmin` controllers, views, view models). Cookie login.
-  - `Areas/Identity/`: the customized login page (user name or email).
+  - `Areas/Identity/`: the customized login page (user name or email). Only login, logout and access denied are routed; the other default Identity pages are removed (`Services/HideUnusedIdentityPages`).
   - `Models/`: entities and view models. `Dtos/`: JSON shapes of the Web API. `Data/`: `ApplicationDbContext`, `DbSeeder`, `Migrations/`.
   - `Services/`: `AdminAccess` (which municipalities an admin manages), `ImageUploadStorage` (safe image uploads).
   - `Extensions/`: image URL helper and OpenAPI/Swagger setup. `wwwroot/`: CSS, JS, Bootstrap, images.
