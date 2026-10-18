@@ -7,7 +7,7 @@ SwiftUI app "Municipal Elections Companion" (see [../ios/README.md](../ios/READM
 - **GitHub repository:** https://github.com/mskim9097/comp4976_assignment1
 - **Swagger UI (try the API in a browser):** https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net/swagger
   (`/api` redirects there; the site root `/` is the MVC home page; locally it is http://localhost:5276/swagger)
-- The API and the MVC site are one project (`web/`, solution `MunicipalElections.sln`) with one SQLite database, see [erd.md](erd.md)
+- The API and the MVC site are one project (`web/`, solution `MunicipalElections.sln`) with one SQLite database, see [erd.png](erd.png)
 
 The Azure app runs on the Free F1 plan, so the first request after a quiet period can take
 10-30 seconds while the app wakes up.
@@ -58,7 +58,7 @@ each) and 18 fictional candidates, plus the roles and the admin users `super` (S
 
 Tables: `AspNetUsers` (Identity, plus `Name`), `AspNetRoles`, `AspNetUserRoles`, `Municipalities`,
 `Positions`, `Candidates`, `SavedCandidates` (unique per user and candidate). The full diagram is in
-[erd.md](erd.md).
+[erd.png](erd.png).
 
 ## Run locally
 

@@ -4,7 +4,7 @@ agent: agent
 ---
 Add a public page that shows `${input:what}`.
 
-- Use the controller/view pattern of `comp4976/week03/RazorSportsSQLiteMVC` (`Index`, `Details`, `asp-action`/`asp-route-id` links) and of `web/Controllers/CandidateDirectoryController.cs` and `PositionsController.cs`.
+- Follow the pattern of `web/Controllers/CandidateDirectoryController.cs` and `PositionsController.cs` (`Index`, `Details`, `asp-action`/`asp-route-id` links).
 - Mark the actions `[AllowAnonymous]` and `[HttpGet]`. Use `AsNoTracking()` and `Include(...)` for related data. Return `NotFound()` when an id does not exist.
 - Escape LIKE wildcards in search text (see `CandidateDirectoryController`). Keep filters in the query string so links can be shared.
 - Show a clear empty state ("No candidates match these filters").

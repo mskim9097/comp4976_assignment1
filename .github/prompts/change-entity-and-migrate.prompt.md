@@ -9,5 +9,5 @@ I need to change the entity `${input:entity}`: ${input:change}.
 3. Create a new migration (`dotnet ef migrations add <Name> -o Data/Migrations` from `web/`); do not edit old migrations. Check the generated `Up`/`Down`.
 4. Update `Data/DbSeeder.cs` so a fresh database is seeded correctly. Seeding must stay idempotent.
 5. Update the API DTOs in `web/Dtos/` so the JSON the iOS app reads does not change (or follow the `api-contract-ios` skill if it must).
-6. Update `docs/erd.mmd`, `docs/erd.md` and regenerate `docs/erd.png`.
+6. Tell me what in `docs/erd.png` and `docs/api.md` no longer matches the schema so the team can update it.
 7. Build, run the app against a fresh database, and check the admin screens and `/api/...` still work.

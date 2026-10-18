@@ -3,7 +3,7 @@
 BCIT COMP4976 / COMP4977 - Assignment 1 (due Fri Oct 23, 2026, 11:59 pm)
 
 One repository for both courses. The MVC site and the Web API are one project with one SQLite database
-(see [docs/erd.md](docs/erd.md)); the iOS app talks to the Web API.
+(see [docs/erd.png](docs/erd.png)); the iOS app talks to the Web API.
 
 | Folder | What it is |
 |---|---|
@@ -45,18 +45,15 @@ pick an iPhone simulator and press Run. See [ios/README.md](ios/README.md).
 
 ## Branches
 
-Work on your own branch (`minsu`, `justice`) and open a Pull Request into `dev`.
-`dev` is merged into `main` when stable. Do not push directly to `main` or `dev`.
+Work on your own branch (`minsu`, `justice`), merge it into `dev`, and merge `dev` into `main` when stable.
 Pushes to `main` that change `web/` redeploy the app to Azure automatically.
 
 ## Submission
 
-The instructor asked us not to split the ASP.NET project: the same project is submitted twice, once in the
-COMP4976 (.NET) D2L dropbox and once in the COMP4977 (iOS) dropbox. The **iOS project must not be included in the
-COMP4976 submission**; the COMP4977 submission contains everything.
+The instructor asked us not to split the ASP.NET project, so the same project goes to both D2L dropboxes
+(COMP4976 and COMP4977). The **iOS project must not be in the COMP4976 zip**; the COMP4977 zip has everything.
 
-Create the zips from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`,
-`xcuserdata`, class material):
+Create the zips from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`):
 
 ```bash
 # COMP4976 (.NET): everything except the iOS app
@@ -66,5 +63,5 @@ git archive --format=zip --prefix=MunicipalElections/ -o MunicipalElections-COMP
 git archive --format=zip --prefix=MunicipalElections/ -o MunicipalElections-COMP4977.zip main
 ```
 
-Each zip needs `docs/readme.txt`, the Copilot files in `.github/`, and its own project document (ERD, screenshots, the Azure
-URL and the GitHub URL). A few links in the README and docs point to `ios/`; they simply do not resolve inside the COMP4976 zip.
+Each zip also needs `docs/readme.txt`, the Copilot files in `.github/` and its own project document.
+Links to `ios/` do not resolve inside the COMP4976 zip.

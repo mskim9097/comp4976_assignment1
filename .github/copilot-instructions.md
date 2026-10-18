@@ -15,7 +15,7 @@ BCIT COMP4976 (ASP.NET Core MVC) and COMP4977 (iOS + Web API), Assignment 1. One
 - Groups are Identity roles: `Super Admin` and one admin role per municipality, named in `Municipality.AdminRoleName` (for example `Pitt Meadows Admin`).
 
 ## Reference style
-- Follow the class examples where they exist: `comp4976/week03/RazorSportsSQLiteMVC` (MVC controllers, `Index/Details/Create/Edit/Delete`, tag-helper views, `asp-validation-*`), `comp4976/week05/SeedIdentity` (startup `Migrate()` + role/user seeding), `comp4976/week04/HealthAPI` (Web API), `comp4977/week05/MovieFactsMVVM` (SwiftUI MVVM).
+- Follow the course examples: MVC controllers with `Index/Details/Create/Edit/Delete` and tag-helper views, startup `Migrate()` plus role/user seeding, controller-based Web API, SwiftUI MVVM.
 - Where the course has no example (file upload, areas, print CSS, JWT), use the official ASP.NET Core approach and keep it small.
 
 ## Conventions
@@ -35,4 +35,4 @@ BCIT COMP4976 (ASP.NET Core MVC) and COMP4977 (iOS + Web API), Assignment 1. One
 ## Do not
 - Do not commit `*.db`, `appsettings.Development.json`, uploaded images (GUID file names) or build output.
 - Do not edit generated migration files by hand; add a new migration. Tell the team before changing an entity (shared database and migrations).
-- Do not push to `main` or `dev` directly: work on your own branch and open a pull request.
+- Work on your own branch, merge it into `dev`, and merge `dev` into `main` only when stable (a push to `main` redeploys Azure).
