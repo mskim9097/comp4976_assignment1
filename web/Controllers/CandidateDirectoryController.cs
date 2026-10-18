@@ -40,17 +40,9 @@ public class CandidateDirectoryController(ApplicationDbContext context) : Contro
             .AsNoTracking()
             .OrderBy(m => m.Name)
             .ToListAsync();
-        var positionsQuery = context.Positions
+        var positions = await context.Positions
             .AsNoTracking()
             .Include(p => p.Municipality)
-            .AsQueryable();
-
-        if (filters.MunicipalityId is int municipalityId)
-        {
-            positionsQuery = positionsQuery.Where(p => p.MunicipalityId == municipalityId);
-        }
-
-        var positions = await positionsQuery
             .OrderBy(p => p.Municipality!.Name)
             .ThenBy(p => p.Name)
             .ToListAsync();
@@ -93,8 +85,22 @@ public class CandidateDirectoryController(ApplicationDbContext context) : Contro
         filters.MunicipalityElectionDates = municipalities.ToDictionary(
             m => m.Name,
             m => m.ElectionDate.ToString("yyyy-MM-dd"));
+        // Position list: the chosen municipality's positions, or all positions with their municipality name.
+        // (directory-filters.js rebuilds this list in the browser when the Municipality choice changes.)
         filters.Positions = positions
-            .Select(p => new SelectListItem($"{p.Municipality!.Name} - {p.Name}", p.PositionId.ToString()))
+            .Where(p => filters.MunicipalityId is null || p.MunicipalityId == filters.MunicipalityId)
+            .Select(p => new SelectListItem(
+                filters.MunicipalityId is null ? $"{p.Municipality!.Name} - {p.Name}" : p.Name,
+                p.PositionId.ToString()))
+            .ToList();
+        filters.AllPositions = positions
+            .Select(p => new DirectoryPositionOption
+            {
+                PositionId = p.PositionId,
+                Name = p.Name,
+                MunicipalityId = p.MunicipalityId,
+                MunicipalityName = p.Municipality!.Name
+            })
             .ToList();
 
         return View(filters);
