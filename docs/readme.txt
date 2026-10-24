@@ -63,6 +63,11 @@ The same ASP.NET project is also submitted for COMP4977 (that zip also contains 
    (site at /, admin at /Admin, API at /api, Swagger at /swagger).
    The free plan can take 10-30 seconds to answer the first request.
 
+   Test accounts (password for all: P@$$w0rd)
+   - super          Super Admin, web site (log in at /Identity/Account/Login)
+   - pm             Pitt Meadows Admin, web site
+   - aa@aa.aa       iOS app user (Log In screen of the iOS app)
+
 7. GitHub repository
    https://github.com/mskim9097/comp4976_assignment1
 

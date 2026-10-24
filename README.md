@@ -31,7 +31,6 @@ cp web/appsettings.Development.example.json web/appsettings.Development.json
 On Windows (PowerShell): `Copy-Item web/appsettings.Development.example.json web/appsettings.Development.json`
 
 Set `Jwt:Key` in `web/appsettings.Development.json` to a random string of at least 32 characters (`openssl rand -base64 48`); see [docs/api.md](docs/api.md).
-Seeded admin users (password `P@$$w0rd`): `super` (Super Admin) and `pm` (Pitt Meadows Admin).
 
 Build and run:
 
@@ -42,6 +41,16 @@ dotnet run --project web --launch-profile http     # http://localhost:5276
 
 iOS app (macOS with Xcode only): open `ios/MunicipalElectionsCompanion/MunicipalElectionsCompanion.xcodeproj`,
 pick an iPhone simulator and press Run. See [ios/README.md](ios/README.md).
+
+## Test accounts
+
+Password for all: `P@$$w0rd`
+
+| User | Role | Use |
+|---|---|---|
+| `super` | Super Admin | Web site admin (`/Identity/Account/Login`) |
+| `pm` | Pitt Meadows Admin | Web site admin (Pitt Meadows only) |
+| `aa@aa.aa` | none | iOS app login (exists on the Azure server only; locally create an account in the app) |
 
 ## Branches
 
