@@ -21,6 +21,15 @@
         status.classList.remove("d-none");
     };
 
+    // Shows why a candidate could not be added, next to the button that was clicked.
+    const showCardMessage = (card, message) => {
+        card.querySelector(".preferred-limit-message")?.remove();
+        const text = createText("p", "preferred-limit-message text-danger small mt-2 mb-0", message);
+        text.setAttribute("role", "alert");
+        card.querySelector(".card-body").append(text);
+        window.setTimeout(() => text.remove(), 8000);
+    };
+
     const parseCandidateList = (rawValue) => {
         if (rawValue === null) {
             return [];
@@ -233,6 +242,7 @@
                 id: candidateId,
                 name: card.dataset.candidateName,
                 position: card.dataset.candidatePosition,
+                seats: Number(card.dataset.candidateSeats) || 0,
                 municipality: card.dataset.candidateMunicipality,
                 electionDate: card.dataset.candidateElectionDate || "",
                 profile: card.dataset.candidateProfile || "",
@@ -240,6 +250,12 @@
                 website: card.dataset.candidateWebsite || "",
                 photo: card.dataset.candidatePhoto || ""
             };
+            const problem = window.PreferredRules.check(preferredCandidates, candidate);
+            if (problem) {
+                showCardMessage(card, problem);
+                return;
+            }
+
             preferredCandidates = [...preferredCandidates, candidate];
             if (!persist()) {
                 preferredCandidates = preferredCandidates.filter((item) => item.id !== candidateId);

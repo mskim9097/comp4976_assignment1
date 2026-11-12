@@ -32,3 +32,8 @@ struct ProfileView: View {
         }
     }
 }
+
+#Preview {
+    ProfileView()
+        .environment(Session.preview())
+}

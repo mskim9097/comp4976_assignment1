@@ -85,3 +85,13 @@ struct CandidatesView: View {
         }
     }
 }
+
+#Preview("All candidates") {
+    NavigationStack { CandidatesView() }
+        .environment(Session.preview())
+}
+
+#Preview("One municipality") {
+    NavigationStack { CandidatesView(municipality: PreviewData.municipality) }
+        .environment(Session.preview())
+}

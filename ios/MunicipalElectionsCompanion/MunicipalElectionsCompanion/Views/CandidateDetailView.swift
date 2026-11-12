@@ -87,3 +87,8 @@ struct CandidateDetailView: View {
         .task { await viewModel.checkSaved(session: session) }
     }
 }
+
+#Preview {
+    NavigationStack { CandidateDetailView(candidate: PreviewData.candidate) }
+        .environment(Session.preview())
+}

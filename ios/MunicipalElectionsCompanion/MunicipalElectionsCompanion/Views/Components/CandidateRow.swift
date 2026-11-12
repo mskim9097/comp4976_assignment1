@@ -22,3 +22,7 @@ struct CandidateRow: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+#Preview {
+    List(PreviewData.candidates) { CandidateRow(candidate: $0) }
+}

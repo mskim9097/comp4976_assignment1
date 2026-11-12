@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MunicipalElections.Web.Data;
 using MunicipalElections.Web.Models;
+using MunicipalElections.Web.Services;
 
 namespace MunicipalElections.Web.Controllers;
 
-public class CandidateDirectoryController(ApplicationDbContext context) : Controller
+public class CandidateDirectoryController(ApplicationDbContext context, AdminAccess adminAccess) : Controller
 {
     // GET: CandidateDirectory/Details/5 - one candidate's profile
     [AllowAnonymous]
@@ -24,11 +25,13 @@ public class CandidateDirectoryController(ApplicationDbContext context) : Contro
             .Include(c => c.Position!)
                 .ThenInclude(p => p.Municipality)
             .FirstOrDefaultAsync(c => c.CandidateId == id);
-        if (candidate is null)
+        var scope = await adminAccess.GetPublicScopeAsync(User);
+        if (candidate is null || !scope.Allows(candidate.Position!.MunicipalityId))
         {
             return NotFound();
         }
 
+        ViewData["CanShortlist"] = !scope.IsAdministrator;
         return View(candidate);
     }
 
@@ -36,21 +39,28 @@ public class CandidateDirectoryController(ApplicationDbContext context) : Contro
     [HttpGet]
     public async Task<IActionResult> Index(CandidateDirectoryViewModel filters)
     {
-        var municipalities = await context.Municipalities
-            .AsNoTracking()
-            .OrderBy(m => m.Name)
-            .ToListAsync();
-        var positions = await context.Positions
-            .AsNoTracking()
-            .Include(p => p.Municipality)
-            .OrderBy(p => p.Municipality!.Name)
-            .ThenBy(p => p.Name)
-            .ToListAsync();
-
+        // A municipality admin only sees their own municipality here (see AdminAccess.GetPublicScopeAsync).
+        var scope = await adminAccess.GetPublicScopeAsync(User);
+        var municipalitiesQuery = context.Municipalities.AsNoTracking();
+        IQueryable<Position> positionsQuery = context.Positions.AsNoTracking().Include(p => p.Municipality);
         IQueryable<Candidate> candidatesQuery = context.Candidates
             .AsNoTracking()
             .Include(c => c.Position!)
                 .ThenInclude(p => p.Municipality);
+        if (scope.MunicipalityIds is { } ids)
+        {
+            municipalitiesQuery = municipalitiesQuery.Where(m => ids.Contains(m.MunicipalityId));
+            positionsQuery = positionsQuery.Where(p => ids.Contains(p.MunicipalityId));
+            candidatesQuery = candidatesQuery.Where(c => ids.Contains(c.Position!.MunicipalityId));
+        }
+
+        var municipalities = await municipalitiesQuery
+            .OrderBy(m => m.Name)
+            .ToListAsync();
+        var positions = await positionsQuery
+            .OrderBy(p => p.Municipality!.Name)
+            .ThenBy(p => p.Name)
+            .ToListAsync();
 
         if (filters.MunicipalityId is int selectedMunicipalityId)
         {
@@ -79,6 +89,7 @@ public class CandidateDirectoryController(ApplicationDbContext context) : Contro
         filters.Candidates = await candidatesQuery
             .OrderBy(c => c.Name)
             .ToListAsync();
+        filters.CanShortlist = !scope.IsAdministrator;
         filters.Municipalities = municipalities
             .Select(m => new SelectListItem(m.Name, m.MunicipalityId.ToString()))
             .ToList();

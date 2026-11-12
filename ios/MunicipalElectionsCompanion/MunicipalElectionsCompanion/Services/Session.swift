@@ -17,6 +17,13 @@ final class Session {
         self.token = TokenStore.load()
     }
 
+    // For the SwiftUI previews: a session that is already logged in (or not) without touching the Keychain.
+    init(api: APIClient, token: String?, user: UserResponse?) {
+        self.api = api
+        self.token = token
+        self.user = user
+    }
+
     func login(email: String, password: String) async throws {
         let response: TokenResponse = try await api.post(
             "api/auth/login", body: LoginRequest(email: email.trimmingCharacters(in: .whitespaces), password: password))

@@ -22,3 +22,13 @@ struct RemoteImage: View {
         }
     }
 }
+
+#Preview {
+    HStack {
+        RemoteImage(url: PreviewData.candidate.photoUrl)
+            .frame(width: 80, height: 80)
+            .clipShape(Circle())
+        RemoteImage(url: nil, placeholderSymbol: "building.2.crop.circle")
+            .frame(width: 80, height: 80)
+    }
+}

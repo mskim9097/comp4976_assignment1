@@ -3,15 +3,22 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MunicipalElections.Web.Data;
 using MunicipalElections.Web.Models;
+using MunicipalElections.Web.Services;
 
 namespace MunicipalElections.Web.Controllers;
 
-public class HomeController(ApplicationDbContext context) : Controller
+public class HomeController(ApplicationDbContext context, AdminAccess adminAccess) : Controller
 {
     public async Task<IActionResult> Index()
     {
-        var municipalities = await context.Municipalities
-            .AsNoTracking()
+        var scope = await adminAccess.GetPublicScopeAsync(User);
+        var query = context.Municipalities.AsNoTracking();
+        if (scope.MunicipalityIds is { } ids)
+        {
+            query = query.Where(m => ids.Contains(m.MunicipalityId));
+        }
+
+        var municipalities = await query
             .OrderBy(m => m.Name)
             .Select(m => new HomeMunicipalityViewModel
             {

@@ -35,19 +35,30 @@
     };
 
     button.addEventListener("click", () => {
-        const next = isSelected()
-            ? preferred.filter((candidate) => candidate.id !== candidateId)
-            : [...preferred, {
+        let next;
+        if (isSelected()) {
+            next = preferred.filter((candidate) => candidate.id !== candidateId);
+        } else {
+            const candidate = {
                 id: candidateId,
                 name: details.dataset.candidateName,
                 position: details.dataset.candidatePosition,
+                seats: Number(details.dataset.candidateSeats) || 0,
                 municipality: details.dataset.candidateMunicipality,
                 electionDate: details.dataset.candidateElectionDate || "",
                 profile: details.dataset.candidateProfile || "",
                 email: details.dataset.candidateEmail || "",
                 website: details.dataset.candidateWebsite || "",
                 photo: details.dataset.candidatePhoto || ""
-            }];
+            };
+            const problem = window.PreferredRules.check(preferred, candidate);
+            if (problem) {
+                status.textContent = problem;
+                status.classList.remove("d-none");
+                return;
+            }
+            next = [...preferred, candidate];
+        }
         try {
             window.localStorage.setItem(storageKey, JSON.stringify(next));
             preferred = next;

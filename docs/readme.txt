@@ -21,7 +21,8 @@ The same ASP.NET project is also submitted for COMP4977 (that zip also contains 
    - Bonus features except dark mode (pagination, PDF export, candidate comparison, Azure Blob Storage)
    - Uploaded images are stored in wwwroot, so a new Azure deployment can remove images uploaded after the last deployment
      (the seeded sample images are part of the project and are not affected)
-   - A candidate saved by a mobile app user cannot be deleted (the screen shows a message)
+   - An administrator cannot delete a candidate that a mobile app user has saved in their voting guide (the admin
+     screen shows a message). App users can remove their own saved candidates at any time.
 
 4. Major challenges
    - The two assignment specs have different schemas. After asking the instructor we merged them into one schema,
@@ -46,11 +47,13 @@ The same ASP.NET project is also submitted for COMP4977 (that zip also contains 
       - /: municipalities. /Positions: positions and seats.
       - /CandidateDirectory: search, filter by municipality and position, "View profile" for details.
       - "Add to preferred candidates" saves a list in the browser; "Print guide" prints it (use print preview).
+        A visitor can choose candidates from one municipality only, and no more candidates for a position than its seats
+        (for example one mayor). Logged-in administrators do not see these tools.
       - "Dark mode" button in the top bar.
    d) Admin area (/Admin, "Admin" link after login)
       - super: all counts, municipalities with logo upload, municipality admin accounts, all positions and candidates.
-      - pm: only Pitt Meadows. Other municipalities cannot be opened or changed
-        (try /Admin/MunicipalityAdmin/EditPosition/4: not found).
+      - pm: only Pitt Meadows, also on the public pages (home, positions, candidates). Other municipalities cannot be
+        opened or changed (try /Admin/MunicipalityAdmin/EditPosition/4: not found).
       - Photos must be PNG, JPEG, GIF or WebP, max 5 MB.
    e) Web API: /swagger. Log in with POST /api/auth/login, press Authorize and paste the token.
    f) iOS app (COMP4977 zip only): open ios/MunicipalElectionsCompanion in Xcode and run on a simulator.

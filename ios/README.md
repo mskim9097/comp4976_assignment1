@@ -21,7 +21,8 @@ ios/MunicipalElectionsCompanion/MunicipalElectionsCompanion/
   Models/        Codable models (Municipality, Position, Candidate, SavedCandidate, auth)
   Services/      APIClient (URLSession + async/await), Session, TokenStore (Keychain), Validation
   ViewModels/    one @Observable view model per screen
-  Views/         SwiftUI screens and small components
+  Views/         SwiftUI screens (one view per file, each with a #Preview) and small components
+  Preview/       Sample data and a fake API for the SwiftUI previews (debug builds only)
 ```
 
 Form checks: required fields, valid email format, password of at least 6 characters, matching password

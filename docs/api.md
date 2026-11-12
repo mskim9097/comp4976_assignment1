@@ -39,7 +39,7 @@ endpoints marked with a lock.
 | GET | `/api/candidates`, `/api/candidates/{id}` | no | Candidates (`?municipalityId=`, `?positionId=`) |
 | GET | `/api/candidates/search?name=` | no | Case-insensitive name search (also takes the filters above) |
 | GET | `/api/savedcandidates` | JWT | The user's voting guide |
-| POST | `/api/savedcandidates` | JWT | Add a candidate (`{ "candidateId": 1 }`) |
+| POST | `/api/savedcandidates` | JWT | Add a candidate (`{ "candidateId": 1 }`); 400 when the seats of that position are already used (one mayor, for example) |
 | DELETE | `/api/savedcandidates/{id}` | JWT | Remove an entry (`id` = `savedCandidateId`) |
 
 Notes for API clients:

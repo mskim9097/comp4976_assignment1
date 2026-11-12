@@ -47,6 +47,18 @@ public class SavedCandidatesApiController(ApplicationDbContext context) : Contro
             return Problem(statusCode: StatusCodes.Status409Conflict, title: "Candidate is already in your voting guide.");
         }
 
+        // A voter can save at most as many candidates for a position as it has seats (one mayor, for example).
+        var seats = candidate.Position!.SeatsAvailable;
+        var savedForPosition = await context.SavedCandidates
+            .CountAsync(s => s.UserId == UserId && s.Candidate!.PositionId == candidate.PositionId);
+        if (savedForPosition >= seats)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: $"{candidate.Position.Name} in {candidate.Position.Municipality!.Name} has {seats} " +
+                       $"{(seats == 1 ? "seat" : "seats")}, so you can save at most {seats}. Remove a saved candidate first.");
+        }
+
         // Whole seconds only, so the iOS ISO-8601 decoder can read the value.
         var now = DateTime.UtcNow;
         var saved = new SavedCandidate

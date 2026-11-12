@@ -12,3 +12,11 @@ struct FieldError: View {
         }
     }
 }
+
+#Preview {
+    VStack(alignment: .leading) {
+        FieldError(message: "Email is required.")
+        FieldError(message: nil)
+    }
+    .padding()
+}

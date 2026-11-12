@@ -15,6 +15,9 @@ public class CandidateDirectoryViewModel
     [Display(Name = "Position")]
     public int? PositionId { get; set; }
 
+    // False for administrators: the preferred-candidates list is a voter tool.
+    public bool CanShortlist { get; set; } = true;
+
     public List<SelectListItem> Municipalities { get; set; } = [];
     public List<SelectListItem> Positions { get; set; } = [];
     // Every position, for the script that updates the Position list when the Municipality changes.
