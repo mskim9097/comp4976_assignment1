@@ -36,6 +36,11 @@ a {
     color: color-mix(in srgb, var(--tenant-color) 80%, black);
 }
 
+/* Dark mode: lighter links (:where keeps the specificity of the rule above, so buttons and nav links are not affected). */
+:where([data-bs-theme="dark"]) a {
+    color: color-mix(in srgb, var(--tenant-color) 45%, white);
+}
+
 .brand-logo {
     width: 32px;
     height: 32px;
@@ -153,3 +158,6 @@ a {
 .loading-progress-text:after {
     content: var(--blazor-load-percentage-text, "Loading");
 }
+
+/* Light / dark mode: the button shows the mode it switches to. */
+[data-bs-theme="dark"] .theme-to-dark, [data-bs-theme="light"] .theme-to-light { display: none; }

@@ -79,3 +79,6 @@ h1:focus {
     right: 0.75rem;
     top: 0.5rem;
 }
+
+/* Light / dark mode: the button shows the mode it switches to. */
+[data-bs-theme="dark"] .theme-to-dark, [data-bs-theme="light"] .theme-to-light { display: none; }

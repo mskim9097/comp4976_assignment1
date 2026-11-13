@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 
 <head>
     <meta charset="utf-8" />
@@ -7,6 +7,18 @@
     <title>Municipal Elections</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
+    <script>
+        // Apply the saved (or system) color theme before the page is drawn, so there is no flash of the wrong theme.
+        (function () {
+            try {
+                var theme = localStorage.getItem("municipal-elections.theme");
+                if (theme !== "light" && theme !== "dark") {
+                    theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+                }
+                document.documentElement.setAttribute("data-bs-theme", theme);
+            } catch (e) { }
+        })();
+    </script>
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
@@ -29,6 +41,7 @@
         <span class="dismiss">🗙</span>
     </div>
     <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/theme.js"></script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 </body>
 
