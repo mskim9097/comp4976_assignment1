@@ -13,7 +13,7 @@ struct LoginView: View {
                         .foregroundStyle(.tint)
                     Text("Municipal Elections Companion")
                         .font(.title3.bold())
-                    Text("Log in to browse candidates and build your voting guide.")
+                    Text("Log in to browse the candidates of your municipality and save your selections.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -76,5 +76,5 @@ struct LoginView: View {
 
 #Preview {
     NavigationStack { LoginView() }
-        .environment(Session())
+        .environment(Session.preview(loggedIn: false))
 }

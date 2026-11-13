@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// Firestore security rules of the Municipal Elections Companion.
+// A signed-in user (Firebase Authentication, email + password) can read and change only their own data;
+// the user is identified by the email address in the sign-in token.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email != null;
+    }
+
+    function email() {
+      return request.auth.token.email.lower();
+    }
+
+    // A selection must be complete, have notes of at most 500 characters and belong to the signed-in user.
+    function validSelection(data) {
+      return data.keys().hasAll(['id', 'userEmail', 'candidateId', 'candidateName', 'positionName',
+                                 'municipalityName', 'city', 'notes', 'dateCreated', 'dateModified'])
+        && data.userEmail == email()
+        && data.candidateId is int
+        && data.candidateName is string && data.candidateName.size() > 0 && data.candidateName.size() <= 200
+        && data.city is string && data.city.size() > 0
+        && data.notes is string && data.notes.size() <= 500
+        && data.dateCreated is timestamp
+        && data.dateModified is timestamp;
+    }
+
+    match /CandidateSelections/{selectionId} {
+      // Own selections only (queries must filter on userEmail).
+      allow read: if signedIn() && resource.data.userEmail == email();
+
+      // The document id is "<candidateId>_<email>": one document per candidate and user, so a duplicate cannot be created.
+      allow create: if signedIn()
+        && validSelection(request.resource.data)
+        && selectionId == string(request.resource.data.candidateId) + '_' + email();
+
+      // Only the notes (and the modified date) may change.
+      allow update: if signedIn()
+        && resource.data.userEmail == email()
+        && validSelection(request.resource.data)
+        && request.resource.data.candidateId == resource.data.candidateId
+        && request.resource.data.city == resource.data.city
+        && request.resource.data.dateCreated == resource.data.dateCreated;
+
+      allow delete: if signedIn() && resource.data.userEmail == email();
+    }
+
+    // The profile (chosen municipality, last synchronization): document id = email.
+    match /Users/{userEmail} {
+      allow read, write: if signedIn() && userEmail == email();
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

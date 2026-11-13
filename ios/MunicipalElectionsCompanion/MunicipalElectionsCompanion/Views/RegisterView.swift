@@ -60,5 +60,5 @@ struct RegisterView: View {
 
 #Preview {
     NavigationStack { RegisterView() }
-        .environment(Session())
+        .environment(Session.preview(loggedIn: false))
 }

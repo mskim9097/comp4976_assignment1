@@ -1,57 +1,51 @@
 #if DEBUG
 import Foundation
 
-// Sample data and an API that answers from it, so the SwiftUI previews work without the server.
+// Sample data and fake services, so the SwiftUI previews work without the server and without Firebase.
 
 enum PreviewData {
     private static let site = "https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net"
 
     static let municipalitiesJSON = """
     [
-      {"municipalityId": 1, "name": "Pitt Meadows", "province": "British Columbia", "electionDate": "2026-10-17",
-       "description": "A small city on the Fraser River.", "logoUrl": "\(site)/images/logos/pitt-meadows.png"},
-      {"municipalityId": 2, "name": "Maple Ridge", "province": "British Columbia", "electionDate": "2026-10-17",
-       "description": "A city in Metro Vancouver.", "logoUrl": "\(site)/images/logos/maple-ridge.png"}
+      {"municipalityId": 1, "name": "Burnaby", "slug": "burnaby", "province": "British Columbia", "electionDate": "2026-10-17",
+       "description": "A large city in Metro Vancouver.", "logoUrl": "\(site)/images/logos/burnaby.png"},
+      {"municipalityId": 2, "name": "Surrey", "slug": "surrey", "province": "British Columbia", "electionDate": "2026-10-17",
+       "description": "One of the fastest growing cities in British Columbia.", "logoUrl": "\(site)/images/logos/surrey.png"}
     ]
     """
 
-    static let positionsJSON = """
+    static let officesJSON = """
     [
-      {"positionId": 1, "name": "Mayor", "seatsAvailable": 1, "municipalityId": 1, "municipalityName": "Pitt Meadows"},
-      {"positionId": 2, "name": "Councillor", "seatsAvailable": 6, "municipalityId": 1, "municipalityName": "Pitt Meadows"},
-      {"positionId": 3, "name": "School Trustee", "seatsAvailable": 2, "municipalityId": 1, "municipalityName": "Pitt Meadows"},
-      {"positionId": 4, "name": "Mayor", "seatsAvailable": 1, "municipalityId": 2, "municipalityName": "Maple Ridge"}
+      {"positionId": 4, "name": "Mayor", "seatsAvailable": 1, "municipalityId": 1, "municipalityName": "Burnaby"},
+      {"positionId": 5, "name": "Councillor", "seatsAvailable": 8, "municipalityId": 1, "municipalityName": "Burnaby"},
+      {"positionId": 6, "name": "School Trustee", "seatsAvailable": 2, "municipalityId": 1, "municipalityName": "Burnaby"}
     ]
+    """
+
+    static let electionJSON = """
+    {"municipalityId": 1, "city": "Burnaby", "slug": "burnaby", "electionDate": "2026-10-17",
+     "province": "British Columbia", "offices": \(officesJSON)}
     """
 
     static let candidatesJSON = """
     [
-      \(candidateJSON(1, "Alana Whitfield", 1, "Mayor", 1, "Pitt Meadows", "c01")),
-      \(candidateJSON(6, "Gordon Lyall", 2, "Councillor", 1, "Pitt Meadows", "c06")),
-      \(candidateJSON(8, "Daniel Cho", 3, "School Trustee", 1, "Pitt Meadows", "c08")),
-      \(candidateJSON(10, "Hamid Karimi", 4, "Mayor", 2, "Maple Ridge", "c10"))
-    ]
-    """
-
-    static let savedCandidatesJSON = """
-    [
-      {"savedCandidateId": 1, "dateSaved": "2026-11-12T18:00:00Z",
-       "candidate": \(candidateJSON(1, "Alana Whitfield", 1, "Mayor", 1, "Pitt Meadows", "c01"))},
-      {"savedCandidateId": 2, "dateSaved": "2026-11-12T18:05:00Z",
-       "candidate": \(candidateJSON(6, "Gordon Lyall", 2, "Councillor", 1, "Pitt Meadows", "c06"))}
+      \(candidateJSON(1, "Alana Whitfield", 4, "Mayor", "c01")),
+      \(candidateJSON(6, "Gordon Lyall", 5, "Councillor", "c06")),
+      \(candidateJSON(8, "Daniel Cho", 6, "School Trustee", "c08")),
+      \(candidateJSON(10, "Mei-Ling Tran", 4, "Mayor", "c10"))
     ]
     """
 
     static let userJSON = #"{"name": "Minsu Kim", "email": "minsu@example.com"}"#
 
-    private static func candidateJSON(_ id: Int, _ name: String, _ positionId: Int, _ position: String,
-                                      _ municipalityId: Int, _ municipality: String, _ photo: String) -> String {
+    private static func candidateJSON(_ id: Int, _ name: String, _ positionId: Int, _ position: String, _ photo: String) -> String {
         """
         {"candidateId": \(id), "name": "\(name)",
          "biography": "Long-time resident who wants to keep the city affordable, safe and green.",
          "photoUrl": "\(site)/images/candidates/\(photo).png", "website": "https://example.com", "email": "candidate@example.com",
          "positionId": \(positionId), "positionName": "\(position)",
-         "municipalityId": \(municipalityId), "municipalityName": "\(municipality)"}
+         "municipalityId": 1, "municipalityName": "Burnaby"}
         """
     }
 
@@ -61,11 +55,23 @@ enum PreviewData {
 
     static let municipalities: [Municipality] = decode(municipalitiesJSON)
     static let candidates: [Candidate] = decode(candidatesJSON)
-    static var municipality: Municipality { municipalities[0] }
+    static let election: Election = decode(electionJSON)
     static var candidate: Candidate { candidates[0] }
+
+    static let selections: [CandidateSelection] = [
+        {
+            var selection = CandidateSelection(candidate: candidates[0], userEmail: "minsu@example.com",
+                                               notes: "Strong plan for transit and housing.",
+                                               now: Date(timeIntervalSince1970: 1_792_000_000))
+            selection.notes = "Strong plan for transit and housing."
+            return selection
+        }(),
+        CandidateSelection(candidate: candidates[1], userEmail: "minsu@example.com", notes: "",
+                           now: Date(timeIntervalSince1970: 1_792_100_000))
+    ]
 }
 
-// Answers the API requests of the previews with the sample data above.
+// Answers the Web API requests of the previews with the sample data above.
 final class PreviewURLProtocol: URLProtocol {
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
@@ -74,9 +80,9 @@ final class PreviewURLProtocol: URLProtocol {
         let path = request.url?.path ?? ""
         let body: String? = switch path {
         case "/api/municipalities": PreviewData.municipalitiesJSON
-        case "/api/positions": PreviewData.positionsJSON
+        case "/api/offices": PreviewData.officesJSON
+        case "/api/elections": PreviewData.electionJSON
         case "/api/candidates", "/api/candidates/search": PreviewData.candidatesJSON
-        case "/api/savedcandidates": PreviewData.savedCandidatesJSON
         case "/api/auth/me": PreviewData.userJSON
         default: nil
         }
@@ -98,13 +104,52 @@ extension APIClient {
     }
 }
 
+// Firebase stand-ins that keep everything in memory.
+final class InMemoryCloud: CloudAuthenticating {
+    var currentEmail: String?
+    init(email: String? = "minsu@example.com") { currentEmail = email }
+    func signInOrCreate(email: String, password: String) async throws { currentEmail = email.lowercased() }
+    func signOut() { currentEmail = nil }
+}
+
+final class InMemoryProfiles: ProfileStoring {
+    var stored: UserProfile?
+    init(stored: UserProfile?) { self.stored = stored }
+    func profile(email: String) async throws -> UserProfile? { stored }
+    func save(_ profile: UserProfile) async throws { stored = profile }
+    func markSynced(email: String, at date: Date) async { stored?.lastSync = date }
+}
+
+final class InMemorySelections: SelectionStoring {
+    var items: [CandidateSelection]
+    init(items: [CandidateSelection]) { self.items = items }
+    func selections(email: String, city: String) async throws -> [CandidateSelection] {
+        items.filter { $0.userEmail == email && $0.city == city }
+    }
+    func create(_ selection: CandidateSelection) async throws {
+        if items.contains(where: { $0.id == selection.id }) { throw SelectionError.duplicate(selection.candidateName) }
+        items.append(selection)
+    }
+    func update(_ selection: CandidateSelection) async throws {
+        if let index = items.firstIndex(where: { $0.id == selection.id }) { items[index] = selection }
+    }
+    func delete(id: String) async throws { items.removeAll { $0.id == id } }
+}
+
 extension Session {
-    // A logged-in user, or nobody when `loggedIn` is false.
+    // A logged-in user (with the given city, or none to see the first-login screen), or nobody when `loggedIn` is false.
     @MainActor
-    static func preview(loggedIn: Bool = true) -> Session {
-        Session(api: .preview,
-                token: loggedIn ? "preview-token" : nil,
-                user: loggedIn ? try? APIDate.makeDecoder().decode(UserResponse.self, from: Data(PreviewData.userJSON.utf8)) : nil)
+    static func preview(loggedIn: Bool = true, city: String? = "Burnaby") -> Session {
+        let profile = UserProfile(email: "minsu@example.com", name: "Minsu Kim", city: city, municipalityId: city == nil ? nil : 1,
+                                  lastSync: Date(timeIntervalSince1970: 1_792_100_000), dateCreated: .now)
+        let services = AppServices(
+            auth: AuthAPI(client: .preview), election: ElectionAPI(client: .preview),
+            cloud: InMemoryCloud(), profiles: InMemoryProfiles(stored: profile),
+            selections: InMemorySelections(items: PreviewData.selections))
+        return Session(services: services,
+                       token: loggedIn ? "preview-token" : nil,
+                       user: loggedIn ? try? APIDate.makeDecoder().decode(UserResponse.self, from: Data(PreviewData.userJSON.utf8)) : nil,
+                       profile: loggedIn ? profile : nil)
     }
 }
 #endif

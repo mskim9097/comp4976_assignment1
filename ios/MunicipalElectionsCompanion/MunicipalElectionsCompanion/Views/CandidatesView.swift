@@ -1,80 +1,85 @@
 import SwiftUI
 
-// Candidate directory: name search plus municipality and position filters.
-// Used as a tab (all candidates) and when a municipality is picked (that municipality's candidates).
+// Candidate directory of the user's city: name search and position filter.
+// Single column on iPhone portrait; more columns and more information per candidate when there is room.
 struct CandidatesView: View {
     @Environment(Session.self) private var session
-    @State private var viewModel: CandidatesViewModel
-    private let title: String
-
-    init(municipality: Municipality? = nil) {
-        _viewModel = State(initialValue: CandidatesViewModel(municipalityId: municipality?.municipalityId))
-        title = municipality?.name ?? "Candidates"
-    }
+    @Environment(ElectionViewModel.self) private var election
+    @Environment(SelectionsViewModel.self) private var selections
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @State private var viewModel = CandidatesViewModel()
 
     var body: some View {
-        Group {
-            if viewModel.candidates.isEmpty && viewModel.isLoading {
-                ProgressView("Loading candidates...")
-            } else if viewModel.candidates.isEmpty, let message = viewModel.errorMessage {
-                ContentUnavailableView {
-                    Label("Could not load candidates", systemImage: "wifi.exclamationmark")
-                } description: {
-                    Text(message)
-                } actions: {
-                    Button("Try Again") {
-                        Task { await viewModel.loadCandidates(session: session) }
-                    }
+        content
+            .navigationTitle("Candidates")
+            .navigationSubtitle(session.city.map { "City: \($0)" } ?? "")
+            .navigationDestination(for: Candidate.self) { candidate in
+                CandidateDetailView(candidate: candidate)
+            }
+            .searchable(text: $viewModel.searchText, prompt: "Search candidates by name")
+            .textInputAutocapitalization(.never)
+            .toolbar { filterMenu }
+            .onChange(of: session.city) {
+                viewModel.clear()
+            }
+            // Runs again (after a short pause while typing) whenever the city, the search text or the filter changes.
+            .task(id: "\(session.city ?? "")|\(viewModel.queryKey)") {
+                try? await Task.sleep(for: .milliseconds(300))
+                guard !Task.isCancelled else { return }
+                await viewModel.load(session: session)
+            }
+            .refreshable { await viewModel.load(session: session) }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if viewModel.candidates.isEmpty && viewModel.isLoading {
+            ProgressView("Loading candidates...")
+        } else if viewModel.candidates.isEmpty, let message = viewModel.errorMessage {
+            ContentUnavailableView {
+                Label("Could not load candidates", systemImage: "wifi.exclamationmark")
+            } description: {
+                Text(message)
+            } actions: {
+                Button("Try Again") {
+                    Task { await viewModel.load(session: session) }
                 }
-            } else if viewModel.candidates.isEmpty {
-                ContentUnavailableView.search
-            } else {
-                List(viewModel.candidates) { candidate in
-                    NavigationLink(value: candidate) {
-                        CandidateRow(candidate: candidate)
+            }
+        } else if viewModel.candidates.isEmpty {
+            ContentUnavailableView.search
+        } else {
+            GeometryReader { proxy in
+                let showsDetails = proxy.size.width >= AdaptiveLayout.wideWidth || verticalSizeClass == .compact
+                ScrollView {
+                    LazyVGrid(columns: AdaptiveLayout.columns(minimum: AdaptiveLayout.cardWidth), spacing: 12) {
+                        ForEach(viewModel.candidates) { candidate in
+                            NavigationLink(value: candidate) {
+                                CandidateCard(candidate: candidate,
+                                              showsDetails: showsDetails,
+                                              isSelected: selections.selection(for: candidate) != nil)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
+                    .padding()
                 }
             }
         }
-        .navigationTitle(title)
-        .navigationDestination(for: Candidate.self) { candidate in
-            CandidateDetailView(candidate: candidate)
-        }
-        .searchable(text: $viewModel.searchText, prompt: "Search candidates by name")
-        .textInputAutocapitalization(.never)
-        .toolbar { filterMenu }
-        .onChange(of: viewModel.selectedMunicipalityId) {
-            viewModel.municipalityChanged()
-        }
-        .task { await viewModel.loadFilters(session: session) }
-        // Runs again (after a short pause while typing) whenever the search text or a filter changes.
-        .task(id: viewModel.queryKey) {
-            try? await Task.sleep(for: .milliseconds(300))
-            guard !Task.isCancelled else { return }
-            await viewModel.loadCandidates(session: session)
-        }
-        .refreshable { await viewModel.loadCandidates(session: session) }
     }
 
     @ToolbarContentBuilder
     private var filterMenu: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Menu {
-                Picker("Municipality", selection: $viewModel.selectedMunicipalityId) {
-                    Text("All Municipalities").tag(Int?.none)
-                    ForEach(viewModel.municipalities) { municipality in
-                        Text(municipality.name).tag(Int?.some(municipality.municipalityId))
-                    }
-                }
                 Picker("Position", selection: $viewModel.selectedPositionId) {
                     Text("All Positions").tag(Int?.none)
-                    ForEach(viewModel.visiblePositions) { position in
-                        Text(viewModel.positionTitle(position)).tag(Int?.some(position.positionId))
+                    ForEach(election.offices) { office in
+                        Text(office.name).tag(Int?.some(office.positionId))
                     }
                 }
                 if viewModel.hasActiveFilters {
-                    Button("Clear Filters", role: .destructive) {
-                        viewModel.clearFilters()
+                    Button("Clear Filter", role: .destructive) {
+                        viewModel.selectedPositionId = nil
                     }
                 }
             } label: {
@@ -86,12 +91,9 @@ struct CandidatesView: View {
     }
 }
 
-#Preview("All candidates") {
+#Preview {
     NavigationStack { CandidatesView() }
         .environment(Session.preview())
-}
-
-#Preview("One municipality") {
-    NavigationStack { CandidatesView(municipality: PreviewData.municipality) }
-        .environment(Session.preview())
+        .environment(ElectionViewModel())
+        .environment(SelectionsViewModel())
 }

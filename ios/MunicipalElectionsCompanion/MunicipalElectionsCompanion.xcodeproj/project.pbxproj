@@ -6,8 +6,25 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F1A5E00000000000000000C1 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = F1A5E00000000000000000B1 /* FirebaseCore */; };
+		F1A5E00000000000000000C2 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F1A5E00000000000000000B2 /* FirebaseAuth */; };
+		F1A5E00000000000000000C3 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F1A5E00000000000000000B3 /* FirebaseFirestore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F1A5E0000000000000000D07 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A29414EE307B00AD00298D70 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A29414F5307B00AD00298D70;
+			remoteInfo = MunicipalElectionsCompanion;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		A29414F6307B00AD00298D70 /* MunicipalElectionsCompanion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MunicipalElectionsCompanion.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1A5E0000000000000000D01 /* MunicipalElectionsCompanionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MunicipalElectionsCompanionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,12 +33,25 @@
 			path = MunicipalElectionsCompanion;
 			sourceTree = "<group>";
 		};
+		F1A5E0000000000000000D02 /* MunicipalElectionsCompanionUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MunicipalElectionsCompanionUITests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		F1A5E0000000000000000D04 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 		A29414F3307B00AD00298D70 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				F1A5E00000000000000000C1 /* FirebaseCore in Frameworks */,
+				F1A5E00000000000000000C2 /* FirebaseAuth in Frameworks */,
+				F1A5E00000000000000000C3 /* FirebaseFirestore in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -31,6 +61,7 @@
 			isa = PBXGroup;
 			children = (
 				A29414F8307B00AD00298D70 /* MunicipalElectionsCompanion */,
+				F1A5E0000000000000000D02 /* MunicipalElectionsCompanionUITests */,
 				A29414F7307B00AD00298D70 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -39,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				A29414F6307B00AD00298D70 /* MunicipalElectionsCompanion.app */,
+				F1A5E0000000000000000D01 /* MunicipalElectionsCompanionUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -60,9 +92,35 @@
 				A29414F8307B00AD00298D70 /* MunicipalElectionsCompanion */,
 			);
 			name = MunicipalElectionsCompanion;
+			packageProductDependencies = (
+				F1A5E00000000000000000B1 /* FirebaseCore */,
+				F1A5E00000000000000000B2 /* FirebaseAuth */,
+				F1A5E00000000000000000B3 /* FirebaseFirestore */,
+			);
 			productName = MunicipalElectionsCompanion;
 			productReference = A29414F6307B00AD00298D70 /* MunicipalElectionsCompanion.app */;
 			productType = "com.apple.product-type.application";
+		};
+		F1A5E0000000000000000D06 /* MunicipalElectionsCompanionUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1A5E0000000000000000D09 /* Build configuration list for PBXNativeTarget "MunicipalElectionsCompanionUITests" */;
+			buildPhases = (
+				F1A5E0000000000000000D03 /* Sources */,
+				F1A5E0000000000000000D04 /* Frameworks */,
+				F1A5E0000000000000000D05 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F1A5E0000000000000000D08 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F1A5E0000000000000000D02 /* MunicipalElectionsCompanionUITests */,
+			);
+			name = MunicipalElectionsCompanionUITests;
+			productName = MunicipalElectionsCompanionUITests;
+			productReference = F1A5E0000000000000000D01 /* MunicipalElectionsCompanionUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -77,6 +135,10 @@
 					A29414F5307B00AD00298D70 = {
 						CreatedOnToolsVersion = 27.0;
 					};
+					F1A5E0000000000000000D06 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = A29414F5307B00AD00298D70;
+					};
 				};
 			};
 			buildConfigurationList = A29414F1307B00AD00298D70 /* Build configuration list for PBXProject "MunicipalElectionsCompanion" */;
@@ -88,17 +150,26 @@
 			);
 			mainGroup = A29414ED307B00AD00298D70;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F1A5E00000000000000000A1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A29414F7307B00AD00298D70 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				A29414F5307B00AD00298D70 /* MunicipalElectionsCompanion */,
+				F1A5E0000000000000000D06 /* MunicipalElectionsCompanionUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		F1A5E0000000000000000D05 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
 		A29414F4307B00AD00298D70 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
@@ -106,7 +177,20 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		F1A5E0000000000000000D08 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A29414F5307B00AD00298D70 /* MunicipalElectionsCompanion */;
+			targetProxy = F1A5E0000000000000000D07 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin PBXSourcesBuildPhase section */
+		F1A5E0000000000000000D03 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 		A29414F2307B00AD00298D70 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
@@ -296,6 +380,42 @@
 			};
 			name = Release;
 		};
+		F1A5E0000000000000000D10 /* Debug configuration for PBXNativeTarget "MunicipalElectionsCompanionUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.bcit.comp4977.MunicipalElectionsCompanionUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MunicipalElectionsCompanion;
+			};
+			name = Debug;
+		};
+		F1A5E0000000000000000D11 /* Release configuration for PBXNativeTarget "MunicipalElectionsCompanionUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = ca.bcit.comp4977.MunicipalElectionsCompanionUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = MunicipalElectionsCompanion;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -315,7 +435,43 @@
 			);
 			defaultConfigurationName = Release;
 		};
+		F1A5E0000000000000000D09 /* Build configuration list for PBXNativeTarget "MunicipalElectionsCompanionUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1A5E0000000000000000D10 /* Debug configuration for PBXNativeTarget "MunicipalElectionsCompanionUITests" */,
+				F1A5E0000000000000000D11 /* Release configuration for PBXNativeTarget "MunicipalElectionsCompanionUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+/* Begin XCRemoteSwiftPackageReference section */
+		F1A5E00000000000000000A1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.4.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F1A5E00000000000000000B1 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F1A5E00000000000000000A1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		F1A5E00000000000000000B2 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F1A5E00000000000000000A1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		F1A5E00000000000000000B3 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F1A5E00000000000000000A1 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A29414EE307B00AD00298D70 /* Project object */;
 	validationLevel = 1;
