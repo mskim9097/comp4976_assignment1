@@ -1,0 +1,55 @@
+@implements IDisposable
+@inject GuideService Guides
+
+<div>
+    <button type="button" class="btn btn-sm @(selected ? "btn-outline-danger" : "btn-outline-secondary")"
+            aria-pressed="@selected.ToString().ToLowerInvariant()" @onclick="ToggleAsync">
+        @(selected ? "Remove from my guide" : "Add to my guide")
+    </button>
+    @if (message is not null)
+    {
+        <div class="text-danger small mt-1 guide-message" role="alert">@message</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public MunicipalityDto Tenant { get; set; } = default!;
+    [Parameter, EditorRequired] public CandidateDto Candidate { get; set; } = default!;
+    [Parameter] public IReadOnlyList<PositionDto> Positions { get; set; } = [];
+
+    private bool selected;
+    private string? message;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Guides.Changed += OnGuideChanged;
+        await RefreshAsync();
+    }
+
+    protected override async Task OnParametersSetAsync() => await RefreshAsync();
+
+    private async Task RefreshAsync() =>
+        selected = (await Guides.GetAsync()).Entries.Any(e => e.CandidateId == Candidate.CandidateId);
+
+    private async Task ToggleAsync()
+    {
+        message = null;
+        if (selected)
+        {
+            await Guides.RemoveAsync(Candidate.CandidateId);
+        }
+        else
+        {
+            message = await Guides.AddAsync(Tenant, Candidate, Positions);
+        }
+        await RefreshAsync();
+    }
+
+    private void OnGuideChanged() => _ = InvokeAsync(async () =>
+    {
+        await RefreshAsync();
+        StateHasChanged();
+    });
+
+    public void Dispose() => Guides.Changed -= OnGuideChanged;
+}

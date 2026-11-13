@@ -1,16 +1,100 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject TenantService Tenants
+@inject GuideService Guides
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<div class="tenant-shell" style="--tenant-color:@(tenant?.ThemeColor ?? "#0d6efd")">
+    <nav class="navbar navbar-expand-md navbar-dark tenant-nav d-print-none">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="@(tenant is null ? "" : tenant.Slug)">
+                @if (tenant?.LogoUrl is not null)
+                {
+                    <img src="@tenant.LogoUrl" alt="" class="brand-logo" />
+                }
+                <span>@(tenant?.Name ?? "Municipal Elections")</span>
+            </a>
+            @if (tenant is not null)
+            {
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav"
+                        aria-controls="siteNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="siteNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><NavLink class="nav-link" href="@tenant.Slug" Match="NavLinkMatch.All">Home</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="@($"{tenant.Slug}/positions")">Positions</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="@($"{tenant.Slug}/candidates")">Candidates</NavLink></li>
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="@($"{tenant.Slug}/guide")">
+                                My guide
+                                @if (guideCount > 0) { <span class="badge text-bg-light ms-1" id="guide-count">@guideCount</span> }
+                            </NavLink>
+                        </li>
+                    </ul>
+                    <a class="nav-link text-white-50 small" href="">All municipalities</a>
+                </div>
+            }
         </div>
+    </nav>
 
-        <article class="content px-4">
-            @Body
-        </article>
+    <main class="container py-4">
+        @Body
     </main>
+
+    <footer class="container py-3 text-muted small d-print-none">
+        Your choices stay in this browser tab only. They are not stored on a server and disappear when you close the tab.
+    </footer>
 </div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private MunicipalityDto? tenant;
+    private int guideCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        Guides.Changed += OnGuideChanged;
+        await UpdateAsync();
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e) =>
+        _ = InvokeAsync(async () =>
+        {
+            await UpdateAsync();
+            StateHasChanged();
+        });
+
+    private void OnGuideChanged() => _ = InvokeAsync(async () =>
+    {
+        guideCount = (await Guides.GetAsync()).Entries.Count;
+        StateHasChanged();
+    });
+
+    // The look of the site follows the municipality in the address.
+    private async Task UpdateAsync()
+    {
+        guideCount = (await Guides.GetAsync()).Entries.Count;
+        var slug = TenantService.SlugFromPath(new Uri(Navigation.Uri).AbsolutePath);
+        try
+        {
+            tenant = slug is null ? null : await Tenants.GetAsync(slug);
+        }
+        catch (ApiUnavailableException)
+        {
+            tenant = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        Guides.Changed -= OnGuideChanged;
+    }
+}

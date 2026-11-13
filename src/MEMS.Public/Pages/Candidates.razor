@@ -1,0 +1,80 @@
+@page "/{Slug}/candidates"
+@inherits TenantPageBase
+@inject ApiClient Api
+
+<PageTitle>Candidates - @(Tenant?.Name)</PageTitle>
+
+<h1 class="mb-3">Candidates</h1>
+
+<PageStatus Loading="Loading" NotFound="NotFound" Error="@Error" />
+
+@if (Tenant is not null && !Loading && Error is null)
+{
+    <div class="row g-2 mb-3">
+        <div class="col-md-6">
+            <label class="visually-hidden" for="search">Search candidates by name</label>
+            <input id="search" class="form-control" placeholder="Search candidates by name" autocomplete="off"
+                   @bind="search" @bind:event="oninput" @bind:after="SearchAsync" />
+        </div>
+        <div class="col-md-4">
+            <label class="visually-hidden" for="position">Filter by position</label>
+            <select id="position" class="form-select" @bind="positionId" @bind:after="SearchAsync">
+                <option value="0">All positions</option>
+                @foreach (var p in positions) { <option value="@p.PositionId">@p.Name</option> }
+            </select>
+        </div>
+    </div>
+
+    <p class="text-muted" id="candidate-count">@candidates.Count candidate(s)</p>
+    @if (searchError is not null)
+    {
+        <div class="alert alert-danger" role="alert">@searchError</div>
+    }
+    @if (candidates.Count == 0 && searchError is null)
+    {
+        <div class="alert alert-info">No candidates match your search.</div>
+    }
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        @foreach (var candidate in candidates)
+        {
+            <div class="col"><CandidateCard Candidate="candidate" Tenant="Tenant" Positions="positions" /></div>
+        }
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "positionId")] public int? PositionIdFromQuery { get; set; }
+
+    private List<PositionDto> positions = [];
+    private List<CandidateDto> candidates = [];
+    private string search = string.Empty;
+    private int positionId;
+    private string? searchError;
+    private int searchVersion;
+
+    protected override async Task LoadAsync()
+    {
+        positions = await Api.GetPositionsAsync(Slug);
+        positionId = positions.Any(p => p.PositionId == PositionIdFromQuery) ? PositionIdFromQuery!.Value : 0;
+        candidates = await Api.GetCandidatesAsync(Slug, null, positionId == 0 ? null : positionId);
+    }
+
+    // Only the answer of the latest search is shown, even when requests finish in another order.
+    private async Task SearchAsync()
+    {
+        var version = ++searchVersion;
+        try
+        {
+            var found = await Api.GetCandidatesAsync(Slug, search, positionId == 0 ? null : positionId);
+            if (version == searchVersion)
+            {
+                candidates = found;
+                searchError = null;
+            }
+        }
+        catch (ApiUnavailableException ex)
+        {
+            searchError = ex.Message;
+        }
+    }
+}

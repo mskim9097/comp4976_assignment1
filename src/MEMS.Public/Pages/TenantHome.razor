@@ -1,0 +1,56 @@
+@page "/{Slug}"
+@inherits TenantPageBase
+@inject ApiClient Api
+
+<PageTitle>@(Tenant?.Name ?? "Municipal elections")</PageTitle>
+
+<PageStatus Loading="Loading" NotFound="NotFound" Error="@Error" />
+
+@if (Tenant is not null && !Loading)
+{
+    <section class="tenant-hero rounded p-4 mb-4">
+        <div class="d-flex flex-wrap align-items-center gap-3">
+            @if (Tenant.LogoUrl is not null)
+            {
+                <img src="@Tenant.LogoUrl" alt="Logo of @Tenant.Name" class="hero-logo" />
+            }
+            <div>
+                <h1 class="mb-1">@Tenant.Name</h1>
+                <div>@Tenant.Province &middot; Election day: <strong>@Tenant.ElectionDate.ToString("MMMM d, yyyy")</strong></div>
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Tenant.WelcomeMessage))
+        {
+            <p class="lead mt-3 mb-0">@Tenant.WelcomeMessage</p>
+        }
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(Tenant.Description))
+    {
+        <p>@Tenant.Description</p>
+    }
+
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6"><div class="card text-center h-100"><div class="card-body">
+            <div class="display-5 fw-bold" id="position-total">@positions.Count</div>
+            <div class="text-muted">Elected positions</div>
+            <a class="btn btn-sm btn-tenant mt-2" href="@Tenant.Slug/positions">See positions</a>
+        </div></div></div>
+        <div class="col-sm-6"><div class="card text-center h-100"><div class="card-body">
+            <div class="display-5 fw-bold" id="candidate-total">@candidateCount</div>
+            <div class="text-muted">Candidates</div>
+            <a class="btn btn-sm btn-tenant mt-2" href="@Tenant.Slug/candidates">Browse candidates</a>
+        </div></div></div>
+    </div>
+}
+
+@code {
+    private List<PositionDto> positions = [];
+    private int candidateCount;
+
+    protected override async Task LoadAsync()
+    {
+        positions = await Api.GetPositionsAsync(Slug);
+        candidateCount = (await Api.GetCandidatesAsync(Slug)).Count;
+    }
+}

@@ -1,7 +1,54 @@
-﻿@page "/"
+@page "/"
+@inject ApiClient Api
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Municipal Elections</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1 class="mb-1">Municipal elections</h1>
+<p class="text-muted">Choose your municipality to see its candidates and prepare your voting guide.</p>
 
-Welcome to your new app.
+@if (error is not null)
+{
+    <div class="alert alert-danger" role="alert">@error</div>
+}
+else if (municipalities is null)
+{
+    <p class="text-muted" role="status">Loading...</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+        @foreach (var m in municipalities)
+        {
+            <div class="col">
+                <a class="card h-100 text-decoration-none municipality-card" href="@m.Slug" style="border-top:6px solid @m.ThemeColor">
+                    <div class="card-body text-center">
+                        @if (m.LogoUrl is not null)
+                        {
+                            <img src="@m.LogoUrl" alt="Logo of @m.Name" class="municipality-logo mb-2" />
+                        }
+                        <h2 class="h5 text-body">@m.Name</h2>
+                        <div class="small text-muted">@m.Province</div>
+                        <div class="small text-muted">Election @m.ElectionDate.ToString("MMMM d, yyyy")</div>
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<MunicipalityDto>? municipalities;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            municipalities = await Api.GetMunicipalitiesAsync();
+        }
+        catch (ApiUnavailableException ex)
+        {
+            error = ex.Message;
+        }
+    }
+}

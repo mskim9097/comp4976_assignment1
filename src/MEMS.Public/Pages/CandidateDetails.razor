@@ -1,0 +1,79 @@
+@page "/{Slug}/candidates/{Id:int}"
+@inherits TenantPageBase
+@inject ApiClient Api
+
+<PageTitle>@(candidate?.Name ?? "Candidate")</PageTitle>
+
+<PageStatus Loading="Loading" NotFound="NotFound" Error="@Error" />
+
+@if (Tenant is not null && !Loading && Error is null)
+{
+    @if (candidate is null)
+    {
+        <div class="alert alert-warning">This candidate was not found in @Tenant.Name.</div>
+    }
+    else
+    {
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="@Tenant.Slug/candidates">Candidates</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@candidate.Name</li>
+            </ol>
+        </nav>
+        <div class="row g-4">
+            <div class="col-md-4">
+                @if (candidate.PhotoUrl is not null)
+                {
+                    <img src="@candidate.PhotoUrl" alt="Photo of @candidate.Name" class="img-fluid rounded w-100 candidate-photo-large" />
+                }
+                else
+                {
+                    <div class="border rounded d-flex align-items-center justify-content-center text-muted" style="height:16rem">No photo</div>
+                }
+            </div>
+            <div class="col-md-8">
+                <h1 class="mb-1">@candidate.Name</h1>
+                <p class="lead text-muted">@candidate.PositionName &middot; @candidate.MunicipalityName</p>
+                <dl class="row">
+                    <dt class="col-sm-3">Election date</dt>
+                    <dd class="col-sm-9">@Tenant.ElectionDate.ToString("MMMM d, yyyy")</dd>
+                    @if (!string.IsNullOrWhiteSpace(candidate.Email))
+                    {
+                        <dt class="col-sm-3">Email</dt>
+                        <dd class="col-sm-9"><a href="mailto:@candidate.Email">@candidate.Email</a></dd>
+                    }
+                    @if (SafeWebsite is not null)
+                    {
+                        <dt class="col-sm-3">Website</dt>
+                        <dd class="col-sm-9"><a href="@SafeWebsite" target="_blank" rel="noopener noreferrer">@SafeWebsite</a></dd>
+                    }
+                </dl>
+                <h2 class="h5">Biography</h2>
+                <p>@(string.IsNullOrWhiteSpace(candidate.Biography) ? "No biography provided." : candidate.Biography)</p>
+                <GuideButton Tenant="Tenant" Candidate="candidate" Positions="positions" />
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private CandidateDto? candidate;
+    private List<PositionDto> positions = [];
+
+    protected override string LoadKey => $"{Slug}/{Id}";
+
+    // Only http and https addresses become links.
+    private string? SafeWebsite =>
+        Uri.TryCreate(candidate?.Website, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+            ? uri.AbsoluteUri
+            : null;
+
+    protected override async Task LoadAsync()
+    {
+        positions = await Api.GetPositionsAsync(Slug);
+        // The Api answers 404 for a candidate of another municipality, so changing the number in the address shows nothing.
+        candidate = await Api.GetCandidateAsync(Slug, Id);
+    }
+}

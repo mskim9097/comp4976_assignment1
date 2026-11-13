@@ -1,0 +1,19 @@
+@* Loading, "not found" and error messages shared by the pages. *@
+@if (Loading)
+{
+    <p class="text-muted" role="status">Loading...</p>
+}
+else if (NotFound)
+{
+    <div class="alert alert-warning">This municipality does not exist. <a href="">Choose a municipality</a>.</div>
+}
+else if (!string.IsNullOrEmpty(Error))
+{
+    <div class="alert alert-danger" role="alert">@Error</div>
+}
+
+@code {
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool NotFound { get; set; }
+    [Parameter] public string? Error { get; set; }
+}

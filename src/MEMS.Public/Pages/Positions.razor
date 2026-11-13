@@ -1,0 +1,39 @@
+@page "/{Slug}/positions"
+@inherits TenantPageBase
+@inject ApiClient Api
+
+<PageTitle>Positions - @(Tenant?.Name)</PageTitle>
+
+<h1 class="mb-3">Elected positions</h1>
+
+<PageStatus Loading="Loading" NotFound="NotFound" Error="@Error" />
+
+@if (Tenant is not null && !Loading && Error is null)
+{
+    <p class="text-muted">@Tenant.Name elects the following positions on @Tenant.ElectionDate.ToString("MMMM d, yyyy").</p>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Position</th><th class="text-end">Seats available</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var position in positions)
+            {
+                <tr>
+                    <td>@position.Name</td>
+                    <td class="text-end">@position.SeatsAvailable</td>
+                    <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="@($"{Tenant.Slug}/candidates?positionId={position.PositionId}")">See candidates</a></td>
+                </tr>
+            }
+            @if (positions.Count == 0)
+            {
+                <tr><td colspan="3" class="text-muted">No positions have been published yet.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<PositionDto> positions = [];
+
+    protected override async Task LoadAsync() => positions = await Api.GetPositionsAsync(Slug);
+}

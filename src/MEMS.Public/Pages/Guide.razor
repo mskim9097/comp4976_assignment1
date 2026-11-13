@@ -1,0 +1,108 @@
+@page "/{Slug}/guide"
+@inherits TenantPageBase
+@implements IDisposable
+@inject GuideService Guides
+@inject ApiClient Api
+@inject IJSRuntime JS
+
+<PageTitle>My guide - @(Tenant?.Name)</PageTitle>
+
+<PageStatus Loading="Loading" NotFound="NotFound" Error="@Error" />
+
+@if (Tenant is not null && !Loading)
+{
+    <div class="d-print-none">
+        <h1 class="mb-1">My voting guide</h1>
+        <p class="text-muted">
+            Your choices are kept only in this browser tab. They are not stored on a server and are removed when you close the tab.
+        </p>
+    </div>
+
+    @if (guide.Entries.Count == 0)
+    {
+        <div class="alert alert-info d-print-none" id="guide-empty">
+            You have not chosen any candidates yet. <a href="@Tenant.Slug/candidates">Browse the candidates</a>.
+        </div>
+    }
+    else if (!string.Equals(guide.Slug, Tenant.Slug, StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="alert alert-warning d-print-none">
+            Your guide is for <strong>@guide.MunicipalityName</strong>.
+            <a href="@guide.Slug/guide">Open it</a> or <button class="btn btn-link p-0 align-baseline" @onclick="ClearAsync">clear it</button>
+            to start a guide for @Tenant.Name.
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-3 d-print-none">
+            <button class="btn btn-tenant" @onclick="PrintAsync" id="print-guide">Print my guide</button>
+            <div class="form-check mb-0">
+                <input id="print-photos" class="form-check-input" type="checkbox" @bind="printPhotos" />
+                <label class="form-check-label" for="print-photos">Include photos</label>
+            </div>
+            <button class="btn btn-outline-danger ms-auto" @onclick="ClearAsync">Clear my guide</button>
+        </div>
+
+        <section class="guide-sheet" aria-label="Voting guide">
+            <header class="mb-3">
+                <h2 class="h3 mb-0">@guide.MunicipalityName voting guide</h2>
+                <div>Election date: <strong>@guide.ElectionDate?.ToString("MMMM d, yyyy")</strong></div>
+                <div class="d-none d-print-block" id="print-date">Print date: @printDate.ToString("MMMM d, yyyy h:mm tt")</div>
+            </header>
+
+            @foreach (var group in guide.Entries.GroupBy(e => e.PositionName))
+            {
+                var seats = positions.FirstOrDefault(p => p.Name == group.Key)?.SeatsAvailable;
+                <h3 class="h5 mt-3">@group.Key @(seats is null ? "" : $"({group.Count()} of {seats} seat{(seats == 1 ? "" : "s")})")</h3>
+                <ul class="list-unstyled">
+                @foreach (var entry in group)
+                {
+                    <li class="d-flex align-items-center gap-3 py-2 border-bottom guide-entry">
+                        @if (printPhotos && entry.PhotoUrl is not null)
+                        {
+                            <img src="@entry.PhotoUrl" alt="Photo of @entry.Name" class="guide-photo" />
+                        }
+                        <span class="fw-semibold flex-grow-1">@entry.Name</span>
+                        <button class="btn btn-sm btn-outline-danger d-print-none" @onclick="() => RemoveAsync(entry.CandidateId)">Remove</button>
+                    </li>
+                }
+                </ul>
+            }
+        </section>
+    }
+}
+
+@code {
+    private GuideState guide = new();
+    private List<PositionDto> positions = [];
+    private bool printPhotos = true;
+    private DateTime printDate = DateTime.Now;
+
+    protected override void OnInitialized() => Guides.Changed += OnChanged;
+
+    protected override async Task LoadAsync()
+    {
+        guide = await Guides.GetAsync();
+        positions = await Api.GetPositionsAsync(Slug);
+    }
+
+    private void OnChanged() => _ = InvokeAsync(async () =>
+    {
+        guide = await Guides.GetAsync();
+        StateHasChanged();
+    });
+
+    private async Task RemoveAsync(int candidateId) => await Guides.RemoveAsync(candidateId);
+
+    private async Task ClearAsync() => await Guides.ClearAsync();
+
+    private async Task PrintAsync()
+    {
+        printDate = DateTime.Now;
+        StateHasChanged();
+        await Task.Delay(50);
+        await JS.InvokeVoidAsync("print");
+    }
+
+    public void Dispose() => Guides.Changed -= OnChanged;
+}

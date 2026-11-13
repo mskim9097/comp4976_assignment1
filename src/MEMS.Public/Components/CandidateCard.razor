@@ -1,0 +1,24 @@
+<article class="card h-100 candidate-card">
+    @if (Candidate.PhotoUrl is not null)
+    {
+        <img src="@Candidate.PhotoUrl" alt="Photo of @Candidate.Name" class="card-img-top candidate-photo" />
+    }
+    <div class="card-body d-flex flex-column">
+        <h2 class="h5 card-title mb-1">@Candidate.Name</h2>
+        <p class="small text-muted mb-2">@Candidate.PositionName &middot; @Candidate.MunicipalityName</p>
+        @if (!string.IsNullOrWhiteSpace(Candidate.Biography))
+        {
+            <p class="card-text small">@Candidate.Biography</p>
+        }
+        <div class="mt-auto d-flex flex-wrap gap-2">
+            <a class="btn btn-sm btn-tenant" href="@Tenant.Slug/candidates/@Candidate.CandidateId">View profile</a>
+            <GuideButton Tenant="Tenant" Candidate="Candidate" Positions="Positions" />
+        </div>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public CandidateDto Candidate { get; set; } = default!;
+    [Parameter, EditorRequired] public MunicipalityDto Tenant { get; set; } = default!;
+    [Parameter] public IReadOnlyList<PositionDto> Positions { get; set; } = [];
+}
