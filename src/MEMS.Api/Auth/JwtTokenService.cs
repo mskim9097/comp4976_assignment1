@@ -1,19 +1,12 @@
 using System.Text;
 using MEMS.Data.Entities;
+using MEMS.Shared;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 
 namespace MEMS.Api.Auth;
-
-// Claim names used in the token. A Municipality Admin carries the id of their tenant.
-public static class ClaimNames
-{
-    public const string Name = "name";
-    public const string Role = "role";
-    public const string MunicipalityId = "municipalityId";
-}
 
 public class JwtTokenService(JwtSettings settings, UserManager<ApplicationUser> users)
 {

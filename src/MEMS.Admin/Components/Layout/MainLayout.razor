@@ -1,20 +1,42 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand" href="">MEMS Admin</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNav"
+                aria-controls="adminNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="adminNav">
+            <AuthorizeView Roles="@AdminRoles.Any">
+                <Authorized>
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><NavLink class="nav-link" href="" Match="NavLinkMatch.All">Dashboard</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="municipalities">Municipalities</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="positions">Positions</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="candidates">Candidates</NavLink></li>
+                    </ul>
+                    <span class="navbar-text me-3">
+                        @context.User.Identity?.Name
+                        <span class="badge text-bg-secondary ms-1">@(context.User.IsInRole(Roles.SuperAdmin) ? "Super Admin" : "Municipality Admin")</span>
+                    </span>
+                    <form action="logout" method="post" class="d-flex">
+                        <AntiforgeryToken />
+                        <button type="submit" class="btn btn-outline-light btn-sm">Log out</button>
+                    </form>
+                </Authorized>
+                <NotAuthorized>
+                    <ul class="navbar-nav me-auto"></ul>
+                    <a class="btn btn-outline-light btn-sm" href="login">Log in</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
+    </div>
+</nav>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+<main class="container py-4">
+    @Body
+</main>
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.

@@ -1,0 +1,103 @@
+@page "/positions/new"
+@page "/positions/{Id:int}/edit"
+@attribute [Authorize(Roles = AdminRoles.Any)]
+@inject AdminSession Admin
+@inject NavigationManager Navigation
+
+<PageTitle>@(Id is null ? "Add position" : "Edit position")</PageTitle>
+
+<h1 class="mb-3">@(Id is null ? "Add position" : "Edit position")</h1>
+
+<Alerts Error="@error" />
+
+@if (model is not null)
+{
+    <EditForm Model="model" OnValidSubmit="SaveAsync" class="row g-3">
+        <DataAnnotationsValidator />
+        <div class="col-12"><ValidationSummary class="text-danger" /></div>
+
+        <div class="col-md-4">
+            <label class="form-label" for="municipality">Municipality</label>
+            @if (Id is null)
+            {
+                <select id="municipality" class="form-select" @bind="municipalityId">
+                    @foreach (var m in municipalities)
+                    {
+                        <option value="@m.MunicipalityId">@m.Name</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <input class="form-control" value="@municipalityName" disabled />
+            }
+        </div>
+        <div class="col-md-5">
+            <label class="form-label" for="name">Position name</label>
+            <InputText id="name" class="form-control" @bind-Value="model.Name" />
+            <ValidationMessage For="() => model.Name" class="text-danger" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="seats">Seats available</label>
+            <InputNumber id="seats" class="form-control" @bind-Value="model.SeatsAvailable" />
+            <ValidationMessage For="() => model.SeatsAvailable" class="text-danger" />
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@saving">Save</button>
+            <a class="btn btn-outline-secondary" href="positions">Cancel</a>
+        </div>
+    </EditForm>
+}
+else if (error is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    [SupplyParameterFromQuery(Name = "municipalityId")]
+    public int? MunicipalityIdFromQuery { get; set; }
+
+    private PositionRequest? model;
+    private List<Municipality> municipalities = [];
+    private int municipalityId;
+    private string municipalityName = string.Empty;
+    private string? error;
+    private bool saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        error = await Admin.TryAsync(async () =>
+        {
+            if (Id is null)
+            {
+                municipalities = await Admin.RunAsync(s => s.Municipalities.ListAsync());
+                municipalityId = municipalities.Any(m => m.MunicipalityId == MunicipalityIdFromQuery)
+                    ? MunicipalityIdFromQuery!.Value
+                    : municipalities.FirstOrDefault()?.MunicipalityId ?? 0;
+                model = new PositionRequest();
+            }
+            else
+            {
+                var position = await Admin.RunAsync(s => s.Positions.GetAsync(Id.Value));
+                municipalityId = position.MunicipalityId;
+                municipalityName = position.Municipality!.Name;
+                model = new PositionRequest { Name = position.Name, SeatsAvailable = position.SeatsAvailable };
+            }
+        });
+    }
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        error = await Admin.TryAsync(async () =>
+        {
+            var saved = await Admin.RunAsync(s => Id is null
+                ? s.Positions.CreateAsync(municipalityId, model!)
+                : s.Positions.UpdateAsync(Id.Value, model!));
+            Navigation.NavigateTo($"positions/{saved.PositionId}");
+        });
+        saving = false;
+    }
+}

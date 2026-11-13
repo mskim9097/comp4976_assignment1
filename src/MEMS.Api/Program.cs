@@ -7,8 +7,8 @@ using MEMS.Data;
 using MEMS.Data.Entities;
 using MEMS.Data.Seed;
 using MEMS.Data.Services;
+using MEMS.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -22,20 +22,7 @@ builder.Services.AddMemsServices(builder.Configuration);
 builder.Services.AddDbContext<MemsDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("memsdb")));
 builder.EnrichSqlServerDbContext<MemsDbContext>();
-builder.Services.AddIdentityCore<ApplicationUser>(options =>
-    {
-        // Matches the minimum password length checked on the iOS registration screen.
-        options.Password.RequiredLength = 6;
-        options.Password.RequireDigit = false;
-        options.Password.RequireLowercase = false;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireNonAlphanumeric = false;
-        options.User.RequireUniqueEmail = true;
-        options.Lockout.MaxFailedAccessAttempts = 5;
-        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-    })
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<MemsDbContext>();
+builder.Services.AddMemsIdentity();
 
 // JWT bearer authentication for administrators and the mobile app.
 var jwt = builder.Configuration.GetSection("Jwt").Get<JwtSettings>() ?? new JwtSettings();

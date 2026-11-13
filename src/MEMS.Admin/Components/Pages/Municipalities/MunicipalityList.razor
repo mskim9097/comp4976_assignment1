@@ -1,0 +1,83 @@
+@page "/municipalities"
+@attribute [Authorize(Roles = AdminRoles.Any)]
+@inject AdminSession Admin
+@inject ImageUrls Images
+@inject IJSRuntime JS
+
+<PageTitle>Municipalities</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Municipalities</h1>
+    <AuthorizeView Roles="@AdminRoles.Super">
+        <a class="btn btn-primary" href="municipalities/new">Add municipality</a>
+    </AuthorizeView>
+</div>
+
+<Alerts Error="@error" Success="@success" />
+
+@if (items is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th></th><th>Name</th><th>URL</th><th>Province</th><th>Election date</th><th class="text-end">Positions</th><th class="text-end">Candidates</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var item in items)
+            {
+                var m = item.Municipality;
+                <tr>
+                    <td><ImageBox Url="@Images.Logo(m.LogoFileName)" Alt="@($"Logo of {m.Name}")" /></td>
+                    <td><a href="municipalities/@m.MunicipalityId">@m.Name</a></td>
+                    <td><code>/@m.Slug</code></td>
+                    <td>@m.Province</td>
+                    <td>@m.ElectionDate.ToString("MMMM d, yyyy")</td>
+                    <td class="text-end">@item.PositionCount</td>
+                    <td class="text-end">@item.CandidateCount</td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" href="municipalities/@m.MunicipalityId">Details</a>
+                        <AuthorizeView Roles="@AdminRoles.Super">
+                            <a class="btn btn-sm btn-outline-primary" href="municipalities/@m.MunicipalityId/edit">Edit</a>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteAsync(m)">Delete</button>
+                        </AuthorizeView>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<MunicipalityListItem>? items;
+    private string? error;
+    private string? success;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        error = await Admin.TryAsync(async () => items = await Admin.RunAsync(s => s.Municipalities.ListWithCountsAsync()));
+    }
+
+    private async Task DeleteAsync(Municipality municipality)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm",
+                $"Delete {municipality.Name}? Its positions and candidates are deleted too. This cannot be undone."))
+        {
+            return;
+        }
+
+        success = null;
+        error = await Admin.TryAsync(() => Admin.RunAsync(s => s.Municipalities.DeleteAsync(municipality.MunicipalityId)));
+        if (error is null)
+        {
+            success = $"{municipality.Name} was deleted.";
+        }
+        await LoadAsync();
+    }
+}

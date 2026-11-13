@@ -1,7 +1,7 @@
 using System.Security.Claims;
-using MEMS.Api.Auth;
 using MEMS.Data;
 using MEMS.Data.Services;
+using MEMS.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 

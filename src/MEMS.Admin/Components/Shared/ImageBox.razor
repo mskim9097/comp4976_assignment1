@@ -1,0 +1,16 @@
+@* A photo or logo with a grey "No image" box when there is none. *@
+@if (Url is null)
+{
+    <div class="border rounded d-flex align-items-center justify-content-center text-muted small bg-body-tertiary"
+         style="width:@(Size)px;height:@(Size)px">No image</div>
+}
+else
+{
+    <img src="@Url" alt="@Alt" class="rounded border" style="width:@(Size)px;height:@(Size)px;object-fit:cover" />
+}
+
+@code {
+    [Parameter] public string? Url { get; set; }
+    [Parameter] public string Alt { get; set; } = string.Empty;
+    [Parameter] public int Size { get; set; } = 56;
+}

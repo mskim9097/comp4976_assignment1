@@ -20,10 +20,12 @@ var api = builder.AddProject<Projects.MEMS_Api>("api")
     .WithEnvironment("Uploads__Path", uploads)
     .WaitFor(db);
 
-builder.AddProject<Projects.MEMS_Admin>("admin")
+var admin = builder.AddProject<Projects.MEMS_Admin>("admin")
     .WithReference(db)
     .WithReference(api)
     .WithEnvironment("Uploads__Path", uploads)
+    // The browser loads photos and logos from the Api, so the Admin app needs its public address.
+    .WithEnvironment("Api__BaseUrl", api.GetEndpoint("https"))
     .WaitFor(api);
 
 var publicSite = builder.AddProject<Projects.MEMS_Public>("public")
@@ -31,6 +33,8 @@ var publicSite = builder.AddProject<Projects.MEMS_Public>("public")
     .WaitFor(api);
 
 // The public site runs in the browser, so the Api needs to know its address (CORS).
+admin.WithEnvironment("PublicSite__BaseUrl", publicSite.GetEndpoint("https"));
+
 api.WithEnvironment("Cors__AllowedOrigins__0", publicSite.GetEndpoint("https"))
    .WithEnvironment("Cors__AllowedOrigins__1", publicSite.GetEndpoint("http"));
 

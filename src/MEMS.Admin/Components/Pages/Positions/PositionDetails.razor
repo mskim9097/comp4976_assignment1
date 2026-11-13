@@ -1,0 +1,73 @@
+@page "/positions/{Id:int}"
+@attribute [Authorize(Roles = AdminRoles.Any)]
+@inject AdminSession Admin
+@inject ImageUrls Images
+
+<PageTitle>@(position?.Name ?? "Position")</PageTitle>
+
+<Alerts Error="@error" />
+
+@if (position is not null)
+{
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <h1 class="mb-0">@position.Name</h1>
+        <span class="text-muted">in @position.Municipality!.Name</span>
+        <a class="btn btn-outline-primary ms-auto" href="positions/@position.PositionId/edit">Edit</a>
+    </div>
+
+    <dl class="row">
+        <dt class="col-sm-3">Seats available</dt>
+        <dd class="col-sm-9">@position.SeatsAvailable</dd>
+        <dt class="col-sm-3">Candidates</dt>
+        <dd class="col-sm-9">@candidates.Count</dd>
+    </dl>
+
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+        <h2 class="h4 mb-0">Candidates</h2>
+        <a class="btn btn-sm btn-primary" href="candidates/new?positionId=@position.PositionId">Add candidate</a>
+    </div>
+    <table class="table table-sm align-middle">
+        <tbody>
+        @foreach (var candidate in candidates)
+        {
+            <tr>
+                <td style="width:72px"><ImageBox Url="@Images.Photo(candidate.PhotoFileName)" Alt="@($"Photo of {candidate.Name}")" Size="48" /></td>
+                <td><a href="candidates/@candidate.CandidateId">@candidate.Name</a></td>
+                <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="candidates/@candidate.CandidateId">Details</a></td>
+            </tr>
+        }
+        @if (candidates.Count == 0)
+        {
+            <tr><td class="text-muted">No candidates yet.</td></tr>
+        }
+        </tbody>
+    </table>
+}
+else if (error is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+
+<a class="btn btn-outline-secondary mt-2" href="positions">Back to positions</a>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Position? position;
+    private List<Candidate> candidates = [];
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        error = await Admin.TryAsync(async () =>
+        {
+            var (p, c) = await Admin.RunAsync(async s =>
+            {
+                var loaded = await s.Positions.GetAsync(Id);
+                return (loaded, await s.Candidates.ListAsync(loaded.MunicipalityId, positionId: Id));
+            });
+            position = p;
+            candidates = c;
+        });
+    }
+}

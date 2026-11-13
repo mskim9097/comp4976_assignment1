@@ -1,0 +1,95 @@
+@page "/login"
+@attribute [ExcludeFromInteractiveRouting]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@layout Layout.MainLayout
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Navigation
+@inject ILogger<Login> Logger
+
+<PageTitle>Log in</PageTitle>
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <h1 class="h3 mb-3">Administrator log in</h1>
+
+        @if (errorMessage is not null)
+        {
+            <div class="alert alert-danger" role="alert">@errorMessage</div>
+        }
+
+        <EditForm Model="Input!" method="post" OnValidSubmit="LogInAsync" FormName="login">
+            <DataAnnotationsValidator />
+            <div class="mb-3">
+                <label for="username" class="form-label">User name</label>
+                <InputText id="username" @bind-Value="Input!.UserName" class="form-control" autocomplete="username" />
+                <ValidationMessage For="() => Input!.UserName" class="text-danger" />
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <InputText id="password" type="password" @bind-Value="Input!.Password" class="form-control" autocomplete="current-password" />
+                <ValidationMessage For="() => Input!.Password" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Log in</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private string? errorMessage;
+
+    [SupplyParameterFromForm]
+    private LoginModel? Input { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
+
+    protected override void OnInitialized() => Input ??= new();
+
+    private async Task LogInAsync()
+    {
+        var login = Input!.UserName.Trim();
+        var user = await UserManager.FindByNameAsync(login) ?? await UserManager.FindByEmailAsync(login);
+        var result = user is null
+            ? Microsoft.AspNetCore.Identity.SignInResult.Failed
+            : await SignInManager.PasswordSignInAsync(user, Input.Password, isPersistent: false, lockoutOnFailure: true);
+
+        if (result.IsLockedOut)
+        {
+            errorMessage = "This account is locked for a few minutes after too many failed attempts.";
+            return;
+        }
+        if (!result.Succeeded || user is null)
+        {
+            Logger.LogWarning("Failed admin login for {Login}", login);
+            errorMessage = "Invalid user name or password.";
+            return;
+        }
+
+        // Residents who registered in the mobile app have no administrator role.
+        if (!await UserManager.IsInRoleAsync(user, Roles.SuperAdmin) && !await UserManager.IsInRoleAsync(user, Roles.MunicipalityAdmin))
+        {
+            await SignInManager.SignOutAsync();
+            errorMessage = "This account is not an administrator account.";
+            return;
+        }
+
+        Logger.LogInformation("Admin {UserName} logged in", user.UserName);
+        Navigation.NavigateTo(IsLocal(ReturnUrl) ? ReturnUrl! : string.Empty);
+    }
+
+    // Only addresses inside this app are allowed as return address.
+    private static bool IsLocal(string? url) =>
+        !string.IsNullOrEmpty(url) && !url.StartsWith("//") && !url.StartsWith("/\\") && !url.Contains("://") &&
+        Uri.IsWellFormedUriString(url, UriKind.Relative);
+
+    private sealed class LoginModel
+    {
+        [Required(ErrorMessage = "User name is required.")]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required.")]
+        public string Password { get; set; } = string.Empty;
+    }
+}

@@ -1,0 +1,68 @@
+@page "/candidates/{Id:int}"
+@attribute [Authorize(Roles = AdminRoles.Any)]
+@inject AdminSession Admin
+@inject ImageUrls Images
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>@(candidate?.Name ?? "Candidate")</PageTitle>
+
+<Alerts Error="@error" />
+
+@if (candidate is not null)
+{
+    <div class="row g-4">
+        <div class="col-md-4"><ImageBox Url="@Images.Photo(candidate.PhotoFileName)" Alt="@($"Photo of {candidate.Name}")" Size="240" /></div>
+        <div class="col-md-8">
+            <h1 class="mb-1">@candidate.Name</h1>
+            <p class="lead text-muted">@candidate.Position!.Name &middot; @candidate.Municipality!.Name</p>
+            <dl class="row">
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">@(candidate.Email ?? "-")</dd>
+                <dt class="col-sm-3">Website</dt>
+                <dd class="col-sm-9">
+                    @if (candidate.Website is not null) { <a href="@candidate.Website" target="_blank" rel="noopener noreferrer">@candidate.Website</a> } else { <text>-</text> }
+                </dd>
+                <dt class="col-sm-3">Date created</dt>
+                <dd class="col-sm-9">@candidate.CreatedDate.ToLocalTime().ToString("MMMM d, yyyy")</dd>
+            </dl>
+            <h2 class="h5">Biography</h2>
+            <p>@(candidate.Profile ?? "No biography provided.")</p>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-primary" href="candidates/@candidate.CandidateId/edit">Edit</a>
+                <button class="btn btn-outline-danger" @onclick="DeleteAsync">Delete</button>
+            </div>
+        </div>
+    </div>
+}
+else if (error is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+
+<a class="btn btn-outline-secondary mt-3" href="candidates">Back to candidates</a>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Candidate? candidate;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        error = await Admin.TryAsync(async () => candidate = await Admin.RunAsync(s => s.Candidates.GetAsync(Id)));
+    }
+
+    private async Task DeleteAsync()
+    {
+        if (candidate is null || !await JS.InvokeAsync<bool>("confirm", $"Delete {candidate.Name}? This cannot be undone."))
+        {
+            return;
+        }
+        error = await Admin.TryAsync(async () =>
+        {
+            await Admin.RunAsync(s => s.Candidates.DeleteAsync(Id));
+            Navigation.NavigateTo("candidates");
+        });
+    }
+}

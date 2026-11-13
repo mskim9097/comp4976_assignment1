@@ -16,6 +16,8 @@ public static class DependencyInjection
         services.AddScoped<MunicipalityService>();
         services.AddScoped<PositionService>();
         services.AddScoped<CandidateService>();
+        services.AddScoped<DashboardService>();
+        services.AddScoped<AdminUserService>();
         return services;
     }
 }

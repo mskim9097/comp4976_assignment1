@@ -12,6 +12,12 @@ public class MunicipalityService(MemsDbContext db, TenantContext tenant, ImageFi
     public Task<List<Municipality>> ListAsync(CancellationToken ct = default) =>
         db.Municipalities.AsNoTracking().OrderBy(m => m.Name).ToListAsync(ct);
 
+    // For the admin list: the municipality plus how many positions, candidates and administrators it has.
+    public async Task<List<MunicipalityListItem>> ListWithCountsAsync(CancellationToken ct = default) =>
+        await db.Municipalities.AsNoTracking().OrderBy(m => m.Name)
+            .Select(m => new MunicipalityListItem(m, m.Positions.Count, m.Candidates.Count, m.Admins.Count))
+            .ToListAsync(ct);
+
     public async Task<Municipality> GetAsync(int id, CancellationToken ct = default) =>
         await db.Municipalities.AsNoTracking().FirstOrDefaultAsync(m => m.MunicipalityId == id, ct)
         ?? throw new NotFoundException("Municipality not found.");
@@ -173,3 +179,5 @@ public class MunicipalityService(MemsDbContext db, TenantContext tenant, ImageFi
         }
     }
 }
+
+public record MunicipalityListItem(Municipality Municipality, int PositionCount, int CandidateCount, int AdminCount);

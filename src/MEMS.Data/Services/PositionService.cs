@@ -15,6 +15,13 @@ public class PositionService(MemsDbContext db, ImageFileStore images)
             .OrderBy(p => p.PositionId)
             .ToListAsync(ct);
 
+    // Every position the caller may see (all municipalities for a Super Admin), with the number of candidates.
+    public async Task<List<PositionListItem>> ListAllAsync(CancellationToken ct = default) =>
+        await db.Positions.AsNoTracking().Include(p => p.Municipality)
+            .OrderBy(p => p.Municipality!.Name).ThenBy(p => p.PositionId)
+            .Select(p => new PositionListItem(p, p.Candidates.Count))
+            .ToListAsync(ct);
+
     public async Task<Position> GetAsync(int id, CancellationToken ct = default) =>
         await db.Positions.AsNoTracking().Include(p => p.Municipality).FirstOrDefaultAsync(p => p.PositionId == id, ct)
         ?? throw new NotFoundException("Position not found.");
@@ -91,3 +98,5 @@ public class PositionService(MemsDbContext db, ImageFileStore images)
         }
     }
 }
+
+public record PositionListItem(Position Position, int CandidateCount);

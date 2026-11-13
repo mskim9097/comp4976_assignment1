@@ -1,0 +1,70 @@
+@page "/"
+@attribute [Authorize(Roles = AdminRoles.Any)]
+@inject AdminSession Admin
+@inject IConfiguration Configuration
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1 class="mb-1">Dashboard</h1>
+@if (user is not null)
+{
+    <p class="text-muted">
+        @if (user.IsSuperAdmin) { <text>You manage all municipalities.</text> }
+        else if (own is not null) { <text>You manage <strong>@own.Name</strong>.</text> }
+    </p>
+}
+
+<Alerts Error="@error" />
+
+@if (counts is not null)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card text-center h-100"><div class="card-body">
+                <div id="municipality-count" class="display-4 fw-bold">@counts.Municipalities</div>
+                <div class="text-muted">@(counts.Municipalities == 1 ? "Municipality" : "Municipalities")</div>
+            </div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center h-100"><div class="card-body">
+                <div id="position-count" class="display-4 fw-bold">@counts.Positions</div>
+                <div class="text-muted">@(counts.Positions == 1 ? "Position" : "Positions")</div>
+            </div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center h-100"><div class="card-body">
+                <div id="candidate-count" class="display-4 fw-bold">@counts.Candidates</div>
+                <div class="text-muted">@(counts.Candidates == 1 ? "Candidate" : "Candidates")</div>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-primary" href="municipalities">Municipalities</a>
+        <a class="btn btn-outline-primary" href="positions">Positions</a>
+        <a class="btn btn-outline-primary" href="candidates">Candidates</a>
+    </div>
+}
+else if (error is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+
+@code {
+    private AdminUser? user;
+    private DashboardCounts? counts;
+    private Municipality? own;
+    private string? error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await Admin.GetUserAsync();
+        error = await Admin.TryAsync(async () =>
+        {
+            var (loadedCounts, municipalities) = await Admin.RunAsync(async s =>
+                (await s.Dashboard.GetCountsAsync(), await s.Municipalities.ListAsync()));
+            counts = loadedCounts;
+            own = user.IsSuperAdmin ? null : municipalities.FirstOrDefault();
+        });
+    }
+}

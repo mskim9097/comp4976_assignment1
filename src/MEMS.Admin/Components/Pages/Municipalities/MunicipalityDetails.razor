@@ -1,0 +1,154 @@
+@page "/municipalities/{Id:int}"
+@attribute [Authorize(Roles = AdminRoles.Any)]
+@inject AdminSession Admin
+@inject ImageUrls Images
+@inject IConfiguration Configuration
+@inject IJSRuntime JS
+
+<PageTitle>@(municipality?.Name ?? "Municipality")</PageTitle>
+
+<Alerts Error="@error" Success="@success" />
+
+@if (municipality is not null)
+{
+    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+        <ImageBox Url="@Images.Logo(municipality.LogoFileName)" Alt="@($"Logo of {municipality.Name}")" Size="96" />
+        <div>
+            <h1 class="mb-0">@municipality.Name</h1>
+            <div class="text-muted">@municipality.Province &middot; Election @municipality.ElectionDate.ToString("MMMM d, yyyy")</div>
+            <div class="mt-1">
+                <span class="badge" style="background-color:@municipality.ThemeColor">Theme @municipality.ThemeColor</span>
+                <a class="ms-2" href="@PublicUrl" target="_blank" rel="noopener">Public site /@municipality.Slug</a>
+            </div>
+        </div>
+        <AuthorizeView Roles="@AdminRoles.Super">
+            <a class="btn btn-outline-primary ms-auto" href="municipalities/@municipality.MunicipalityId/edit">Edit</a>
+        </AuthorizeView>
+    </div>
+
+    <dl class="row">
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9">@(municipality.Description ?? "-")</dd>
+        <dt class="col-sm-3">Welcome message</dt>
+        <dd class="col-sm-9">@(municipality.WelcomeMessage ?? "-")</dd>
+    </dl>
+
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+        <h2 class="h4 mb-0">Positions</h2>
+        <a class="btn btn-sm btn-primary" href="positions/new?municipalityId=@municipality.MunicipalityId">Add position</a>
+    </div>
+    <table class="table table-sm">
+        <thead><tr><th>Position</th><th class="text-end">Seats</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var position in positions)
+        {
+            <tr>
+                <td>@position.Name</td>
+                <td class="text-end">@position.SeatsAvailable</td>
+                <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="positions/@position.PositionId">Details</a></td>
+            </tr>
+        }
+        @if (positions.Count == 0)
+        {
+            <tr><td colspan="3" class="text-muted">No positions yet.</td></tr>
+        }
+        </tbody>
+    </table>
+
+    <AuthorizeView Roles="@AdminRoles.Super" Context="superAdmin">
+        <h2 class="h4 mt-4">Administrators</h2>
+        <table class="table table-sm align-middle">
+            <thead><tr><th>User name</th><th>Name</th><th>Email</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var admin in admins)
+            {
+                <tr>
+                    <td>@admin.UserName</td><td>@admin.Name</td><td>@admin.Email</td>
+                    <td class="text-end"><button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveAdminAsync(admin)">Remove</button></td>
+                </tr>
+            }
+            @if (admins.Count == 0)
+            {
+                <tr><td colspan="4" class="text-muted">No administrator accounts yet.</td></tr>
+            }
+            </tbody>
+        </table>
+
+        <h3 class="h5">Create an administrator for @municipality.Name</h3>
+        <EditForm Model="newAdmin" OnValidSubmit="CreateAdminAsync" class="row g-2 mb-4">
+            <DataAnnotationsValidator />
+            <div class="col-md-3"><InputText class="form-control" placeholder="User name" @bind-Value="newAdmin.UserName" /><ValidationMessage For="() => newAdmin.UserName" class="text-danger" /></div>
+            <div class="col-md-3"><InputText class="form-control" placeholder="Full name" @bind-Value="newAdmin.Name" /><ValidationMessage For="() => newAdmin.Name" class="text-danger" /></div>
+            <div class="col-md-3"><InputText class="form-control" placeholder="Email" @bind-Value="newAdmin.Email" /><ValidationMessage For="() => newAdmin.Email" class="text-danger" /></div>
+            <div class="col-md-2"><InputText type="password" class="form-control" placeholder="Password" @bind-Value="newAdmin.Password" /><ValidationMessage For="() => newAdmin.Password" class="text-danger" /></div>
+            <div class="col-md-1"><button type="submit" class="btn btn-primary w-100">Add</button></div>
+        </EditForm>
+    </AuthorizeView>
+}
+else if (error is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+
+<a class="btn btn-outline-secondary mt-2" href="municipalities">Back to municipalities</a>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private Municipality? municipality;
+    private List<Position> positions = [];
+    private List<ApplicationUser> admins = [];
+    private CreateAdminRequest newAdmin = new();
+    private AdminUser? user;
+    private string? error;
+    private string? success;
+
+    private string PublicUrl => $"{(Configuration["PublicSite:BaseUrl"] ?? string.Empty).TrimEnd('/')}/{municipality?.Slug}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await Admin.GetUserAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        error = await Admin.TryAsync(async () =>
+        {
+            var (m, p, a) = await Admin.RunAsync(async s => (
+                await s.Municipalities.GetAsync(Id),
+                await s.Positions.ListAsync(Id),
+                user!.IsSuperAdmin ? await s.Users.ListAsync(Id) : []));
+            municipality = m;
+            positions = p;
+            admins = a;
+        });
+    }
+
+    private async Task CreateAdminAsync()
+    {
+        success = null;
+        error = await Admin.TryAsync(() => Admin.RunAsync(s => s.Users.CreateAsync(Id, newAdmin)));
+        if (error is null)
+        {
+            success = $"Administrator {newAdmin.UserName} was created.";
+            newAdmin = new CreateAdminRequest();
+        }
+        await LoadAsync();
+    }
+
+    private async Task RemoveAdminAsync(ApplicationUser admin)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", $"Remove the administrator {admin.UserName}?"))
+        {
+            return;
+        }
+        success = null;
+        error = await Admin.TryAsync(() => Admin.RunAsync(s => s.Users.RemoveAsync(admin.Id)));
+        if (error is null)
+        {
+            success = $"Administrator {admin.UserName} was removed.";
+        }
+        await LoadAsync();
+    }
+}

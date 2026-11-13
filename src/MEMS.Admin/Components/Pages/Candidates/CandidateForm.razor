@@ -1,0 +1,127 @@
+@page "/candidates/new"
+@page "/candidates/{Id:int}/edit"
+@attribute [Authorize(Roles = AdminRoles.Any)]
+@inject AdminSession Admin
+@inject ImageUrls Images
+@inject NavigationManager Navigation
+
+<PageTitle>@(Id is null ? "Add candidate" : "Edit candidate")</PageTitle>
+
+<h1 class="mb-3">@(Id is null ? "Add candidate" : "Edit candidate")</h1>
+
+<Alerts Error="@error" />
+
+@if (model is not null)
+{
+    <EditForm Model="model" OnValidSubmit="SaveAsync" class="row g-3">
+        <DataAnnotationsValidator />
+        <div class="col-12"><ValidationSummary class="text-danger" /></div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="name">Candidate name</label>
+            <InputText id="name" class="form-control" @bind-Value="model.Name" />
+            <ValidationMessage For="() => model.Name" class="text-danger" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="position">Position</label>
+            <InputSelect id="position" class="form-select" @bind-Value="model.PositionId">
+                <option value="0">Choose a position...</option>
+                @foreach (var group in positions.GroupBy(p => p.Municipality!.Name))
+                {
+                    <optgroup label="@group.Key">
+                        @foreach (var p in group) { <option value="@p.PositionId">@p.Name</option> }
+                    </optgroup>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => model.PositionId" class="text-danger" />
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="bio">Biography / profile</label>
+            <InputTextArea id="bio" rows="4" class="form-control" @bind-Value="model.Biography" />
+            <div class="form-text">At most @Limits.ProfileMax characters.</div>
+            <ValidationMessage For="() => model.Biography" class="text-danger" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="website">Website (optional)</label>
+            <InputText id="website" class="form-control" placeholder="https://" @bind-Value="model.Website" />
+            <ValidationMessage For="() => model.Website" class="text-danger" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="email">Email (optional)</label>
+            <InputText id="email" class="form-control" @bind-Value="model.Email" />
+            <ValidationMessage For="() => model.Email" class="text-danger" />
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="photo">Photograph</label>
+            <div class="d-flex align-items-center gap-3">
+                <ImageBox Url="@Images.Photo(currentPhoto)" Alt="Current photo" Size="72" />
+                <InputFile id="photo" class="form-control" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp"
+                           OnChange="OnPhotoSelected" />
+            </div>
+            <div class="form-text">PNG, JPEG, GIF or WebP, up to 5 MB.</div>
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@saving">Save</button>
+            <a class="btn btn-outline-secondary" href="candidates">Cancel</a>
+        </div>
+    </EditForm>
+}
+else if (error is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    [SupplyParameterFromQuery(Name = "positionId")]
+    public int? PositionIdFromQuery { get; set; }
+
+    private CandidateRequest? model;
+    private List<Position> positions = [];
+    private string? currentPhoto;
+    private IBrowserFile? photo;
+    private string? error;
+    private bool saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        error = await Admin.TryAsync(async () =>
+        {
+            positions = (await Admin.RunAsync(s => s.Positions.ListAllAsync())).Select(i => i.Position).ToList();
+            if (Id is null)
+            {
+                model = new CandidateRequest { PositionId = positions.Any(p => p.PositionId == PositionIdFromQuery) ? PositionIdFromQuery!.Value : 0 };
+                return;
+            }
+
+            var c = await Admin.RunAsync(s => s.Candidates.GetAsync(Id.Value));
+            model = new CandidateRequest
+            {
+                Name = c.Name, PositionId = c.PositionId, Biography = c.Profile, Website = c.Website, Email = c.Email
+            };
+            currentPhoto = c.PhotoFileName;
+        });
+    }
+
+    private void OnPhotoSelected(InputFileChangeEventArgs e) => photo = e.File;
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        error = await Admin.TryAsync(async () =>
+        {
+            var saved = await Admin.RunAsync(s => Id is null ? s.Candidates.CreateAsync(model!) : s.Candidates.UpdateAsync(Id.Value, model!));
+            if (photo is not null)
+            {
+                await Admin.RunAsync(async s =>
+                {
+                    await using var stream = photo.OpenReadStream(Limits.ImageMaxBytes);
+                    await s.Candidates.SetPhotoAsync(saved.CandidateId, photo.Name, photo.ContentType, photo.Size, stream);
+                });
+            }
+            Navigation.NavigateTo($"candidates/{saved.CandidateId}");
+        });
+        saving = false;
+    }
+}

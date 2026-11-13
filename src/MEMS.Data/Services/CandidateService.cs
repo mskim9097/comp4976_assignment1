@@ -10,9 +10,14 @@ namespace MEMS.Data.Services;
 public class CandidateService(MemsDbContext db, ImageFileStore images)
 {
     public Task<List<Candidate>> ListAsync(
-        int municipalityId, string? name = null, int? positionId = null, CancellationToken ct = default)
+        int? municipalityId, string? name = null, int? positionId = null, CancellationToken ct = default)
     {
-        var query = WithDetails(db.Candidates.AsNoTracking()).Where(c => c.MunicipalityId == municipalityId);
+        // municipalityId null = every candidate the caller may see (the tenant filter still applies).
+        var query = WithDetails(db.Candidates.AsNoTracking());
+        if (municipalityId is not null)
+        {
+            query = query.Where(c => c.MunicipalityId == municipalityId);
+        }
         if (positionId is not null)
         {
             query = query.Where(c => c.PositionId == positionId);

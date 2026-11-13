@@ -1,0 +1,122 @@
+@page "/candidates"
+@attribute [Authorize(Roles = AdminRoles.Any)]
+@inject AdminSession Admin
+@inject ImageUrls Images
+@inject IJSRuntime JS
+
+<PageTitle>Candidates</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Candidates</h1>
+    <a class="btn btn-primary" href="candidates/new">Add candidate</a>
+</div>
+
+<Alerts Error="@error" Success="@success" />
+
+<div class="row g-2 mb-3">
+    <div class="col-md-4"><input class="form-control" placeholder="Search by name" @bind="search" @bind:event="oninput" @bind:after="LoadAsync" /></div>
+    @if (municipalities.Count > 1)
+    {
+        <div class="col-md-3">
+            <select class="form-select" @bind="municipalityId" @bind:after="MunicipalityChangedAsync">
+                <option value="0">All municipalities</option>
+                @foreach (var m in municipalities) { <option value="@m.MunicipalityId">@m.Name</option> }
+            </select>
+        </div>
+    }
+    <div class="col-md-3">
+        <select class="form-select" @bind="positionId" @bind:after="LoadAsync">
+            <option value="0">All positions</option>
+            @foreach (var p in VisiblePositions) { <option value="@p.PositionId">@(municipalityId == 0 && municipalities.Count > 1 ? $"{p.Municipality!.Name} - {p.Name}" : p.Name)</option> }
+        </select>
+    </div>
+</div>
+
+@if (candidates is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+else
+{
+    <p class="text-muted">@candidates.Count candidate(s)</p>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th></th><th>Name</th><th>Position</th><th>Municipality</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var c in candidates)
+            {
+                <tr>
+                    <td style="width:72px"><ImageBox Url="@Images.Photo(c.PhotoFileName)" Alt="@($"Photo of {c.Name}")" Size="48" /></td>
+                    <td><a href="candidates/@c.CandidateId">@c.Name</a></td>
+                    <td>@c.Position!.Name</td>
+                    <td>@c.Municipality!.Name</td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" href="candidates/@c.CandidateId">Details</a>
+                        <a class="btn btn-sm btn-outline-primary" href="candidates/@c.CandidateId/edit">Edit</a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteAsync(c)">Delete</button>
+                    </td>
+                </tr>
+            }
+            @if (candidates.Count == 0)
+            {
+                <tr><td colspan="5" class="text-muted">No candidates match.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Candidate>? candidates;
+    private List<Municipality> municipalities = [];
+    private List<Position> positions = [];
+    private string search = string.Empty;
+    private int municipalityId;
+    private int positionId;
+    private string? error;
+    private string? success;
+
+    private IEnumerable<Position> VisiblePositions =>
+        positions.Where(p => municipalityId == 0 || p.MunicipalityId == municipalityId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        error = await Admin.TryAsync(async () =>
+        {
+            var (m, p) = await Admin.RunAsync(async s =>
+                (await s.Municipalities.ListAsync(), (await s.Positions.ListAllAsync()).Select(i => i.Position).ToList()));
+            municipalities = m;
+            positions = p;
+        });
+        await LoadAsync();
+    }
+
+    private async Task MunicipalityChangedAsync()
+    {
+        // The position list changes with the municipality, so an old choice is cleared.
+        positionId = 0;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        error = await Admin.TryAsync(async () => candidates = await Admin.RunAsync(s => s.Candidates.ListAsync(
+            municipalityId == 0 ? null : municipalityId, search, positionId == 0 ? null : positionId)));
+    }
+
+    private async Task DeleteAsync(Candidate candidate)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", $"Delete {candidate.Name}? This cannot be undone."))
+        {
+            return;
+        }
+
+        success = null;
+        error = await Admin.TryAsync(() => Admin.RunAsync(s => s.Candidates.DeleteAsync(candidate.CandidateId)));
+        if (error is null)
+        {
+            success = $"{candidate.Name} was deleted.";
+        }
+        await LoadAsync();
+    }
+}

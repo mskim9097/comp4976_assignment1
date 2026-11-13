@@ -1,0 +1,80 @@
+@page "/positions"
+@attribute [Authorize(Roles = AdminRoles.Any)]
+@inject AdminSession Admin
+@inject IJSRuntime JS
+
+<PageTitle>Positions</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Positions</h1>
+    <a class="btn btn-primary" href="positions/new">Add position</a>
+</div>
+
+<Alerts Error="@error" Success="@success" />
+
+@if (items is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+else if (items.Count == 0)
+{
+    <div class="alert alert-info">There are no positions yet.</div>
+}
+else
+{
+    @foreach (var group in items.GroupBy(i => i.Position.Municipality!))
+    {
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+            <h2 class="h4 mb-0">@group.Key.Name</h2>
+            <a class="btn btn-sm btn-outline-primary" href="positions/new?municipalityId=@group.Key.MunicipalityId">Add position</a>
+        </div>
+        <table class="table table-sm align-middle">
+            <thead><tr><th>Position</th><th class="text-end">Seats</th><th class="text-end">Candidates</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var item in group)
+            {
+                <tr>
+                    <td><a href="positions/@item.Position.PositionId">@item.Position.Name</a></td>
+                    <td class="text-end">@item.Position.SeatsAvailable</td>
+                    <td class="text-end">@item.CandidateCount</td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" href="positions/@item.Position.PositionId">Details</a>
+                        <a class="btn btn-sm btn-outline-primary" href="positions/@item.Position.PositionId/edit">Edit</a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteAsync(item.Position)">Delete</button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private List<PositionListItem>? items;
+    private string? error;
+    private string? success;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        error = await Admin.TryAsync(async () => items = await Admin.RunAsync(s => s.Positions.ListAllAsync()));
+    }
+
+    private async Task DeleteAsync(Position position)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm",
+                $"Delete {position.Name} in {position.Municipality?.Name}? Its candidates are deleted too."))
+        {
+            return;
+        }
+
+        success = null;
+        error = await Admin.TryAsync(() => Admin.RunAsync(s => s.Positions.DeleteAsync(position.PositionId)));
+        if (error is null)
+        {
+            success = $"{position.Name} was deleted.";
+        }
+        await LoadAsync();
+    }
+}

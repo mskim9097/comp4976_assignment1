@@ -1,0 +1,147 @@
+@page "/municipalities/new"
+@page "/municipalities/{Id:int}/edit"
+@attribute [Authorize(Roles = AdminRoles.Super)]
+@inject AdminSession Admin
+@inject ImageUrls Images
+@inject NavigationManager Navigation
+
+<PageTitle>@(Id is null ? "Add municipality" : "Edit municipality")</PageTitle>
+
+<h1 class="mb-3">@(Id is null ? "Add municipality" : "Edit municipality")</h1>
+
+<Alerts Error="@error" />
+
+@if (model is null)
+{
+    <p class="text-muted">Loading...</p>
+}
+else
+{
+    <EditForm Model="model" OnValidSubmit="SaveAsync" class="row g-3">
+        <DataAnnotationsValidator />
+        <div class="col-12"><ValidationSummary class="text-danger" /></div>
+
+        <div class="col-md-6">
+            <label class="form-label" for="name">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="model.Name" @bind-Value:after="SuggestSlug" />
+            <ValidationMessage For="() => model.Name" class="text-danger" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="slug">URL segment (slug)</label>
+            <div class="input-group">
+                <span class="input-group-text">/</span>
+                <InputText id="slug" class="form-control" @bind-Value="model.Slug" @bind-Value:after="() => slugTouched = true" />
+            </div>
+            <div class="form-text">The public address of this municipality, for example <code>/burnaby</code>.</div>
+            <ValidationMessage For="() => model.Slug" class="text-danger" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="province">Province</label>
+            <InputSelect id="province" class="form-select" @bind-Value="model.Province">
+                @foreach (var province in Provinces.All)
+                {
+                    <option value="@province">@province</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => model.Province" class="text-danger" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="date">Election date</label>
+            <InputDate id="date" class="form-control" @bind-Value="model.ElectionDate" />
+            <ValidationMessage For="() => model.ElectionDate" class="text-danger" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="color">Theme colour</label>
+            <InputText id="color" type="color" class="form-control form-control-color w-100" @bind-Value="model.ThemeColor" />
+            <ValidationMessage For="() => model.ThemeColor" class="text-danger" />
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="description">Description</label>
+            <InputTextArea id="description" rows="3" class="form-control" @bind-Value="model.Description" />
+            <ValidationMessage For="() => model.Description" class="text-danger" />
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="welcome">Welcome message on the public site</label>
+            <InputText id="welcome" class="form-control" @bind-Value="model.WelcomeMessage" />
+            <ValidationMessage For="() => model.WelcomeMessage" class="text-danger" />
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="logo">Logo</label>
+            <div class="d-flex align-items-center gap-3">
+                <ImageBox Url="@Images.Logo(currentLogo)" Alt="Current logo" Size="72" />
+                <InputFile id="logo" class="form-control" accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp"
+                           OnChange="OnLogoSelected" />
+            </div>
+            <div class="form-text">PNG, JPEG, GIF or WebP, up to 5 MB.</div>
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@saving">Save</button>
+            <a class="btn btn-outline-secondary" href="municipalities">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private MunicipalityRequest? model;
+    private string? currentLogo;
+    private IBrowserFile? logo;
+    private string? error;
+    private bool saving;
+    private bool slugTouched;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id is null)
+        {
+            model = new MunicipalityRequest();
+            return;
+        }
+
+        error = await Admin.TryAsync(async () =>
+        {
+            var m = await Admin.RunAsync(s => s.Municipalities.GetAsync(Id.Value));
+            model = new MunicipalityRequest
+            {
+                Name = m.Name, Slug = m.Slug, Province = m.Province, ElectionDate = m.ElectionDate,
+                Description = m.Description, ThemeColor = m.ThemeColor, WelcomeMessage = m.WelcomeMessage
+            };
+            currentLogo = m.LogoFileName;
+            slugTouched = true;
+        });
+    }
+
+    // While adding, the slug follows the name until it is edited by hand.
+    private void SuggestSlug()
+    {
+        if (Id is null && !slugTouched && model is not null)
+        {
+            model.Slug = TenantSlug.FromName(model.Name);
+        }
+    }
+
+    private void OnLogoSelected(InputFileChangeEventArgs e) => logo = e.File;
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        error = await Admin.TryAsync(async () =>
+        {
+            var saved = await Admin.RunAsync(s => Id is null
+                ? s.Municipalities.CreateAsync(model!)
+                : s.Municipalities.UpdateAsync(Id.Value, model!));
+
+            if (logo is not null)
+            {
+                await Admin.RunAsync(async s =>
+                {
+                    await using var stream = logo.OpenReadStream(Limits.ImageMaxBytes);
+                    await s.Municipalities.SetLogoAsync(saved.MunicipalityId, logo.Name, logo.ContentType, logo.Size, stream);
+                });
+            }
+            Navigation.NavigateTo($"municipalities/{saved.MunicipalityId}");
+        });
+        saving = false;
+    }
+}
