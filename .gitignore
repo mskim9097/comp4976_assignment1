@@ -502,3 +502,6 @@ DerivedData/
 
 # Editor settings (local only)
 .vscode/
+
+# Photos and logos uploaded while running the apps locally
+/uploads/
