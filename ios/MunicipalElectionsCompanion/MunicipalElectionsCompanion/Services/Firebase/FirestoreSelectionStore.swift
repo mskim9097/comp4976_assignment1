@@ -16,13 +16,20 @@ struct FirestoreSelectionStore: SelectionStoring {
         }
     }
 
+    // The document id holds the candidate and the user, so a second selection of the same candidate would overwrite the
+    // first. The security rules refuse that (the creation date would change); only then the document is read to tell the
+    // user that the candidate is already saved. Reading a document that does not exist is not allowed by the rules.
     func create(_ selection: CandidateSelection) async throws {
-        try await FirebaseErrorMapper.run {
-            let document = collection.document(selection.id)
-            if try await document.getDocument().exists {
+        let document = collection.document(selection.id)
+        do {
+            try await FirebaseErrorMapper.run {
+                try await document.setData(Firestore.Encoder().encode(selection))
+            }
+        } catch let error as CloudError {
+            if let existing = try? await document.getDocument(), existing.exists {
                 throw SelectionError.duplicate(selection.candidateName)
             }
-            try await document.setData(Firestore.Encoder().encode(selection))
+            throw error
         }
     }
 

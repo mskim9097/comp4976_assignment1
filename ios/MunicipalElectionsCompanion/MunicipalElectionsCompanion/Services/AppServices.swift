@@ -43,6 +43,16 @@ struct AppServices {
         #endif
     }
 
+    // Debug builds started with "-resetSession" log out first (UI tests start from a clean state, because the Keychain
+    // token and the Firebase sign-in survive between launches).
+    static var debugResetSession: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-resetSession")
+        #else
+        false
+        #endif
+    }
+
     static func live(client: APIClient = APIClient()) -> AppServices {
         AppServices(auth: AuthAPI(client: client),
                     election: ElectionAPI(client: client),

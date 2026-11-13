@@ -188,7 +188,12 @@ final class MunicipalElectionsCompanionUITests: XCTestCase {
 
     private func launch(autoLoginEmail: String?) {
         app = XCUIApplication()
-        app.launchArguments = ["-fakeFirebase"]
+        // REAL_FIREBASE=1 (pass it as TEST_RUNNER_REAL_FIREBASE=1 to xcodebuild) runs against the real Firebase project
+        // of the GoogleService-Info.plist instead of the in-memory fake.
+        app.launchArguments = ["-resetSession"]
+        if ProcessInfo.processInfo.environment["REAL_FIREBASE"] != "1" {
+            app.launchArguments += ["-fakeFirebase"]
+        }
         if let email = autoLoginEmail {
             app.launchArguments += ["-autoLogin", "\(email):\(Self.password)"]
         }
@@ -218,6 +223,13 @@ final class MunicipalElectionsCompanionUITests: XCTestCase {
         }.resume()
         wait(for: [done], timeout: 60)
         XCTAssertEqual(status, 200, "the test account could not be registered")
+        // Lets a clean-up script delete the Firebase users these tests create.
+        if let path = ProcessInfo.processInfo.environment["CREATED_EMAILS_FILE"],
+           let handle = FileHandle(forWritingAtPath: path) ?? { FileManager.default.createFile(atPath: path, contents: nil); return FileHandle(forWritingAtPath: path) }() {
+            handle.seekToEndOfFile()
+            handle.write(Data((email + "\n").utf8))
+            try? handle.close()
+        }
         return email
     }
 
