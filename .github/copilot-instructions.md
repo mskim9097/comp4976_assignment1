@@ -1,38 +1,40 @@
-# Copilot instructions - Municipal Elections Management System
+# Copilot instructions - Municipal Elections Management System (MEMS)
 
-BCIT COMP4976 (ASP.NET Core MVC) and COMP4977 (iOS + Web API), Assignment 1. One repository, one ASP.NET project, one SQLite database.
+BCIT COMP4976 (Blazor, multi-tenant) and COMP4977 (iOS app that uses the same Web API), Assignment 2. One repository, one solution (`MEMS.sln`), one SQL Server database.
 
-## Project layout
-- `web/`: one ASP.NET Core (.NET 10) project. It serves the public MVC site, the Admin area and the JSON Web API.
-  - `Controllers/`: public MVC controllers (`Home`, `CandidateDirectory`, `Positions`). `Controllers/Api/`: JSON API (JWT), used by the iOS app.
-  - `Areas/Admin/`: the Admin area (`Dashboard`, `SuperAdmin`, `MunicipalityAdmin` controllers, views, view models). Cookie login.
-  - `Areas/Identity/`: the customized login page (user name or email). Only login, logout and access denied are routed; the other default Identity pages are removed (`Services/HideUnusedIdentityPages`).
-  - `Models/`: entities and view models. `Dtos/`: JSON shapes of the Web API. `Data/`: `ApplicationDbContext`, `DbSeeder`, `Migrations/`.
-  - `Services/`: `AdminAccess` (which municipalities an admin manages), `ImageUploadStorage` (safe image uploads).
-  - `Extensions/`: image URL helper and OpenAPI/Swagger setup. `wwwroot/`: CSS, JS, Bootstrap, images.
-- `ios/`: SwiftUI app (MVVM) for COMP4977 that calls the Web API. `docs/`: ERD, architecture, `readme.txt`. `.github/`: this file, prompts, skills, deployment workflow.
-- Entities: `Municipality`, `Position`, `Candidate`, `SavedCandidate` plus Identity (`ApplicationUser`, roles). `Candidate` has no `MunicipalityId`; the municipality comes from its `Position`.
-- Groups are Identity roles: `Super Admin` and one admin role per municipality, named in `Municipality.AdminRoleName` (for example `Pitt Meadows Admin`).
+## Solution layout (`src/`)
+- `MEMS.AppHost`: .NET Aspire. Starts the SQL Server container (`memsdb`) and the Api, Admin and Public projects, and passes connection strings, the JWT key, the uploads folder and the CORS origins.
+- `MEMS.ServiceDefaults`: logging, tracing, health checks and service discovery for the server projects.
+- `MEMS.Shared`: DTOs and request classes with validation attributes, `Roles`, `Limits`, `TenantSlug`, `Provinces`, `SelectionRules`. No dependencies.
+- `MEMS.Data`: EF Core Code First (`MemsDbContext`, entities, migrations, seed), `TenantContext`, the services (`MunicipalityService`, `PositionService`, `CandidateService`, `DashboardService`, `AdminUserService`, `ImageFileStore`).
+- `MEMS.Api`: ASP.NET Web API (controllers, JWT, `TenantScopeFilter`, `ApiExceptionHandler`, Swagger). It is the only project that migrates and seeds the database.
+- `MEMS.Admin`: Blazor Server under `/admin`, Identity cookie login. Every data operation runs through `AdminSession.RunAsync`.
+- `MEMS.Public`: Blazor WebAssembly. It has no reference to `MEMS.Data` and never touches the database; it only calls `/api/{slug}/...`.
+- `tests/MEMS.Tests`: xUnit tests (tenant isolation, service rules, shared rules, image uploads).
 
-## Reference style
-- Follow the course examples: MVC controllers with `Index/Details/Create/Edit/Delete` and tag-helper views, startup `Migrate()` plus role/user seeding, controller-based Web API, SwiftUI MVVM.
-- Where the course has no example (file upload, areas, print CSS, JWT), use the official ASP.NET Core approach and keep it small.
+## Multi-tenancy (the most important rule)
+- A municipality is a tenant. Its `Slug` is in the public URL (`/burnaby`). `Position`, `Candidate` and `ApplicationUser` carry the tenant in `MunicipalityId`.
+- A candidate's tenant always comes from its position, never from the request. The database enforces it with a composite foreign key.
+- `MemsDbContext` has query filters on `Municipality`, `Position` and `Candidate`. They use `TenantContext`; once restricted, a scope can never move to another tenant.
+- Api: `TenantScopeFilter` restricts the scope (route `{slug}` or `?city=`), answers 404 for an unknown tenant and 403 for an administrator of another municipality.
+- Admin: never inject the DbContext or services into a page. Use `AdminSession.RunAsync` (new scope per operation, restricted to the tenant in the login cookie) and `AdminSession.TryAsync` for messages.
+- Never trust ids, slugs or tenant ids from a form or URL: load rows through the services (they are filtered).
 
 ## Conventions
-- C#: PascalCase for types and members, nullable reference types on, file-scoped namespaces, constructor injection (primary constructors are fine), `async`/`await` with `...Async` for helpers.
-- Controllers stay thin. Rules that more than one controller needs go in `Services/`.
-- Use view models for forms. Validate with data annotations (`[Required]`, `[StringLength]`, `[EmailAddress]`, `[Url]`, `[Range]`) AND check `ModelState.IsValid` on the server. Views include `_ValidationScriptsPartial` for client-side validation.
-- Every POST action has `[ValidateAntiForgeryToken]`.
-- Authorization is enforced on the server in every admin action. Never rely on hiding links. See the `admin-authorization` skill.
-- Uploaded images go through `ImageUploadStorage` only. See the `image-upload` skill.
-- The JSON API is a contract with the iOS app. See the `api-contract-ios` skill before changing `Dtos/` or `Controllers/Api/`.
-- Bootstrap 5.3 for the UI. Use theme-aware classes (`bg-body-tertiary`, `text-body-secondary`), not fixed light colors, so dark mode keeps working (`data-bs-theme`).
+- C#: PascalCase, nullable reference types on, file-scoped namespaces, primary constructors for DI, `async`/`await` with `CancellationToken` where a request can be cancelled.
+- Controllers stay thin and call the services. Rules go into the services or `MEMS.Shared`, not into controllers or pages.
+- Services throw `NotFoundException`, `ConflictException`, `ForbiddenException`, `RuleViolationException`. `ApiExceptionHandler` turns them into problem responses; the Admin app shows the message. Unexpected errors are logged and answered with a general message (no stack traces).
+- Validation in three layers: DataAnnotations on the request classes in `MEMS.Shared` (Blazor forms and Api model binding), checks in the services, constraints in the database (required, lengths, unique, check, foreign keys).
+- Razor: string parameters need `@` (`Error="@error"`). Blazor pages use Bootstrap 5 classes only.
+- Use structured logging (`logger.LogWarning("Tenant violation: user {UserId} ...", id)`), never string concatenation.
+- The voter's choices are never stored on the server: `MEMS.Public` keeps them in `sessionStorage` (key `mems.guide`).
 
 ## Configuration and secrets
-- The connection string and `Jwt:Key` live in `web/appsettings.Development.json`, which is git-ignored. Update `appsettings.Development.example.json` when keys change. On Azure they come from the `ConnectionStrings__DefaultConnection` and `Jwt__Key` app settings.
-- Seed data (roles, users `super` and `pm` with password `P@$$w0rd`, municipalities, positions, candidates) runs at startup after `Database.Migrate()` in `Data/DbSeeder.cs`.
+- Connection string `memsdb` comes from Aspire. `Jwt__Key` comes from the AppHost parameter in development and from an app setting elsewhere. Do not commit secrets.
+- Seed data (4 municipalities, 12 positions, 25 candidates, roles and users `super`, `pm`, `burnabyadmin`, `surreyadmin`, `richmondadmin`, password `P@$$w0rd`) is created by `MemsDbSeeder` at Api start-up.
 
 ## Do not
-- Do not commit `*.db`, `appsettings.Development.json`, uploaded images (GUID file names) or build output.
-- Do not edit generated migration files by hand; add a new migration. Tell the team before changing an entity (shared database and migrations).
-- Work on your own branch, merge it into `dev`, and merge `dev` into `main` only when stable (a push to `main` redeploys Azure).
+- Do not use SQLite, MVC views or the Identity UI package.
+- Do not commit `*.db`, `uploads/`, `bin/`, `obj/` or build output.
+- Do not edit generated migrations; add a new one: `dotnet tool run dotnet-ef migrations add <Name> --project src/MEMS.Data`.
+- Do not merge into `main` without checking the Azure deployment (a push to `main` redeploys the Api).

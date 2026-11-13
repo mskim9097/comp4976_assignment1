@@ -1,76 +1,81 @@
-# Municipal Elections Management System
+# Municipal Elections Management System (MEMS) - Assignment 2
 
-BCIT COMP4976 / COMP4977 - Assignment 1 (due Fri Oct 23, 2026, 11:59 pm)
+BCIT COMP4976 / COMP4977, Assignment 2 (due Fri Nov 20, 2026, 11:59 pm). Team: Minsu Kim (A01424659), Justice Plunkett (A01405284).
 
-One repository for both courses. The MVC site and the Web API are one project with one SQLite database
-(see [docs/erd.png](docs/erd.png)); the iOS app talks to the Web API.
+MEMS is a multi-tenant application. Every municipality is a tenant with its own public site (`/burnaby`, `/surrey`, `/richmond`, `/pitt-meadows`), its own candidates and its own administrators. One shared administration site (`/admin`) manages all of them, and one Web API serves the public site and the iOS app. Everything is orchestrated with .NET Aspire.
 
-| Folder | What it is |
+![Architecture](docs/architecture.png)
+
+## Solution (`MEMS.sln`)
+
+| Project | What it is |
 |---|---|
-| `web/` | One ASP.NET Core project: the MVC site (COMP4976: public site, Admin area at `/Admin`, cookie login, dark mode) and the Web API under `/api` (COMP4977: JWT, Swagger). EF Core Code First, one SQLite database, Identity |
+| `src/MEMS.AppHost` | .NET Aspire AppHost: SQL Server container, Api, Admin, Public, service discovery, connection strings, dashboard |
+| `src/MEMS.ServiceDefaults` | Logging, tracing, health checks, service discovery |
+| `src/MEMS.Shared` | DTOs and request classes with validation, roles, limits, shared rules |
+| `src/MEMS.Data` | EF Core Code First, migrations, seed data, tenant-aware services |
+| `src/MEMS.Api` | ASP.NET Web API (JWT, tenant isolation, Swagger) |
+| `src/MEMS.Admin` | Blazor Server administration site (`/admin`, ASP.NET Core Identity) |
+| `src/MEMS.Public` | Blazor WebAssembly public site (one app, tenant from the URL) |
+| `tests/MEMS.Tests` | xUnit tests |
 | `ios/` | SwiftUI app "Municipal Elections Companion" (COMP4977) |
-| `docs/` | `readme.txt` (COMP4976), ERD, architecture diagram, [API documentation](docs/api.md) |
-| `.github/` | Copilot instructions, prompts and skills (COMP4976) and the Azure deployment workflow; must stay at the repo root |
+| `docs/` | API documentation, ERD, architecture diagram |
 
-Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global dotnet-ef`; Xcode for the iOS app.
+## Run it
 
-## Deployed apps
+Requirements: .NET 10 SDK (`global.json`), Docker Desktop (running), and optionally the Aspire CLI.
 
-| What | URL |
+```bash
+dotnet run --project src/MEMS.AppHost      # or: aspire run
+```
+
+The first start pulls the SQL Server 2022 image. The Api creates the database, applies the migration and loads the seed data. The AppHost passes the connection string (`memsdb`) and a development-only JWT key; nothing has to be configured by hand. Uploaded photos and logos go to the git-ignored `uploads/` folder.
+
+| What | Address |
 |---|---|
-| Web app: MVC site at `/`, Web API at `/api/...`, Swagger UI at `/swagger` | https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net |
+| Aspire dashboard | https://localhost:17228 (the exact link, with login token, is printed in the terminal) |
+| Public site | https://localhost:7025 (tenants: `/burnaby`, `/surrey`, `/richmond`, `/pitt-meadows`) |
+| Admin site | https://localhost:7036/admin |
+| Web API and Swagger UI | https://localhost:7261/swagger |
 
-## Local setup
+The public site reads the Api address from `src/MEMS.Public/wwwroot/appsettings.json` (a browser app cannot use the server-side service discovery); it matches the fixed Api port in `launchSettings.json`.
 
-Secrets and connection strings are **not** committed. Copy the example file and keep the copy untracked:
+## Test accounts (password for all: `P@$$w0rd`)
 
-```bash
-cp web/appsettings.Development.example.json web/appsettings.Development.json
-```
-
-On Windows (PowerShell): `Copy-Item web/appsettings.Development.example.json web/appsettings.Development.json`
-
-Set `Jwt:Key` in `web/appsettings.Development.json` to a random string of at least 32 characters (`openssl rand -base64 48`); see [docs/api.md](docs/api.md).
-
-Build and run:
-
-```bash
-dotnet build MunicipalElections.sln
-dotnet run --project web --launch-profile http     # http://localhost:5276
-```
-
-iOS app (macOS with Xcode only): open `ios/MunicipalElectionsCompanion/MunicipalElectionsCompanion.xcodeproj`,
-pick an iPhone simulator and press Run. See [ios/README.md](ios/README.md).
-
-## Test accounts
-
-Password for all: `P@$$w0rd`
-
-| User | Role | Use |
+| User | Role | Tenant |
 |---|---|---|
-| `super` | Super Admin | Web site admin (`/Identity/Account/Login`) |
-| `pm` | Pitt Meadows Admin | Web site admin (Pitt Meadows only) |
-| `aa@aa.aa` | none | iOS app login (exists on the Azure server only; locally create an account in the app) |
+| `super` | Super Admin | all municipalities |
+| `burnabyadmin` | Municipality Admin | Burnaby |
+| `surreyadmin` | Municipality Admin | Surrey |
+| `richmondadmin` | Municipality Admin | Richmond |
+| `pm` | Municipality Admin | Pitt Meadows |
 
-## Branches
+Seed data: 4 municipalities, 12 positions (Mayor, Councillor, School Trustee), 25 fictional candidates. People who register in the iOS app are normal users without a role and cannot log in to the admin site.
 
-Work on your own branch (`minsu`, `justice`), merge it into `dev`, and merge `dev` into `main` when stable.
-Pushes to `main` that change `web/` redeploy the app to Azure automatically.
+## Tests
+
+```bash
+dotnet test tests/MEMS.Tests               # 44 tests, no Docker needed (in-memory database)
+```
+
+Besides these, the API, the admin site and the public site were checked end to end (curl and a headless browser) with the Aspire stack running; see the project document.
+
+## Documentation
+
+- [docs/api.md](docs/api.md): endpoints, request and response examples, error responses
+- [docs/erd.png](docs/erd.png), [docs/architecture.png](docs/architecture.png)
+- [docs/deficiency-report.md](docs/deficiency-report.md): how the Assignment 1 findings were fixed
+- `.github/`: `copilot-instructions.md`, prompts and skills for the AI assistants (GitHub Copilot, Claude Code), and the Azure deployment workflow
+
+## Branches and deployment
+
+Work is done on a personal branch, merged into `dev`, and `dev` into `main`. A push to `main` that changes `src/` redeploys the Web API to Azure App Service (`.github/workflows`). Azure needs the SQL connection string (`ConnectionStrings__memsdb`), `Jwt__Key` and the start command `dotnet MEMS.Api.dll`.
 
 ## Submission
 
-The instructor asked us not to split the ASP.NET project, so the same project goes to both D2L dropboxes
-(COMP4976 and COMP4977). The **iOS project must not be in the COMP4976 zip**; the COMP4977 zip has everything.
-
-Create the zips from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`):
+The same repository is submitted for COMP4976 and COMP4977. The iOS project must not be in the COMP4976 (.NET) zip.
 
 ```bash
-# COMP4976 (.NET): everything except the iOS app
-git archive --format=zip --prefix=MunicipalElections/ -o MunicipalElections-COMP4976.zip main -- . ':(exclude)ios'
-
-# COMP4977 (iOS): the complete repository, including ios/
-git archive --format=zip --prefix=MunicipalElections/ -o MunicipalElections-COMP4977.zip main
+git archive --format=zip --prefix=MEMS/ -o MEMS-COMP4976.zip main -- . ':(exclude)ios'
+git archive --format=zip --prefix=MEMS/ -o MEMS-COMP4977.zip main
 ```
-
-Each zip also needs `docs/readme.txt`, the Copilot files in `.github/` and its own project document.
-Links to `ios/` do not resolve inside the COMP4976 zip.

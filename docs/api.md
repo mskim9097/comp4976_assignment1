@@ -1,83 +1,156 @@
-# Municipal Elections Web API
+# MEMS Web API
 
-ASP.NET Core Web API (.NET 10, EF Core, SQLite, Identity, JWT) inside the web app in `web/`, consumed by the
-SwiftUI app "Municipal Elections Companion" (see [../ios/README.md](../ios/README.md)).
+ASP.NET Core Web API (.NET 10, EF Core, SQL Server, JWT) in `src/MEMS.Api`. It serves the Blazor public site and the iOS app. Swagger UI: `/swagger` (OpenAPI document: `/openapi/v1.json`). Health checks: `/health` and `/alive`.
 
-- **Deployed API (Azure App Service):** https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net
-- **GitHub repository:** https://github.com/mskim9097/comp4976_assignment1
-- **Swagger UI (try the API in a browser):** https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net/swagger
-  (`/api` redirects there; the site root `/` is the MVC home page; locally it is http://localhost:5276/swagger)
-- The API and the MVC site are one project (`web/`, solution `MunicipalElections.sln`) with one SQLite database, see [erd.png](erd.png)
+Local address: `https://localhost:7261` (started by the Aspire AppHost).
 
-The Azure app runs on the Free F1 plan, so the first request after a quiet period can take
-10-30 seconds while the app wakes up.
+## Tenants
 
-## Try the deployed API
+A municipality is a tenant and is named by its **slug** (`burnaby`, `surrey`, `richmond`, `pitt-meadows`).
 
-```bash
-HOST=https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net
-curl $HOST/api/municipalities
-curl "$HOST/api/candidates/search?name=an"
-```
+- `GET /api/burnaby/candidates` returns only the candidates of Burnaby.
+- A Municipality Admin who asks for another municipality gets **403** (and a warning in the log). An unknown slug is **404**. A candidate or position id of another municipality is **404**, even when the id exists.
+- Reading is public. Creating, changing, deleting and uploading need a login as Super Admin or as Municipality Admin of that municipality. Managing municipalities needs a Super Admin.
+- The mobile app uses `?city=Burnaby` (name or slug) instead of the slug in the route; the same isolation applies.
 
-Create an account with `POST /api/auth/register` (the iOS app does this on its Create Account screen), then call
-`POST /api/auth/login` and send the returned token as `Authorization: Bearer <token>`.
-The seeded admins can also log in here by email (`super@example.com`, `pm@example.com`, password `P@$$w0rd`).
-Sample requests for every endpoint are in `web/MunicipalElections.Web.http`.
-In Swagger UI, call `POST /api/auth/login`, copy the token, press **Authorize** and paste it to try the
-endpoints marked with a lock.
+## Authentication
+
+`POST /api/auth/login` returns a JWT; send it as `Authorization: Bearer <token>`. The login accepts the user name (`burnabyadmin`) or the email address. After 5 wrong passwords an account is locked for 5 minutes. People who register in the app (`POST /api/auth/register`) have no role: they can read public data but cannot change anything.
 
 ## Endpoints
 
-| Method | Endpoint | Auth | Description |
+| Method | Route | Access | Description |
 |---|---|---|---|
-| POST | `/api/auth/register` | no | Create an account (`name`, `email`, `password` min 6) |
-| POST | `/api/auth/login` | no | Returns `{ "token": "..." }` |
-| GET | `/api/auth/me` | JWT | Logged-in user (extra, used by the Profile screen) |
-| GET | `/api/municipalities`, `/api/municipalities/{id}` | no | Municipalities |
-| GET | `/api/positions`, `/api/positions/{id}` | no | Positions (`?municipalityId=`) |
-| GET | `/api/candidates`, `/api/candidates/{id}` | no | Candidates (`?municipalityId=`, `?positionId=`) |
-| GET | `/api/candidates/search?name=` | no | Case-insensitive name search (also takes the filters above) |
-| GET | `/api/savedcandidates` | JWT | The user's voting guide |
-| POST | `/api/savedcandidates` | JWT | Add a candidate (`{ "candidateId": 1 }`); 400 when the seats of that position are already used (one mayor, for example) |
-| DELETE | `/api/savedcandidates/{id}` | JWT | Remove an entry (`id` = `savedCandidateId`) |
+| POST | `/api/auth/register` | public | Create an app account (`name`, `email`, `password` min 6) |
+| POST | `/api/auth/login` | public | `{ "email": "<user name or email>", "password": "..." }` returns `{ "token": "..." }` |
+| GET | `/api/auth/me` | login | Name, email, roles, tenant of the user |
+| GET | `/api/municipalities`, `/{id}`, `/{slug}` | public | Municipalities (a Municipality Admin sees only their own) |
+| POST | `/api/municipalities` | Super Admin | Create a municipality |
+| PUT, DELETE | `/api/municipalities/{id}` | Super Admin | Update, delete (also deletes its positions and candidates; refused while it has administrators) |
+| POST | `/api/municipalities/{id}/logo` | Super Admin | Upload a logo (`multipart/form-data`, field `file`) |
+| GET | `/api/{slug}/positions`, `/{id}` | public | Positions of the municipality |
+| POST, PUT, DELETE | `/api/{slug}/positions[/{id}]` | admin of the tenant | Create, update, delete a position |
+| GET | `/api/{slug}/candidates?name=&positionId=` | public | Candidates (search by name ignoring case, filter by position) |
+| GET | `/api/{slug}/candidates/{id}` | public | One candidate |
+| POST, PUT, DELETE | `/api/{slug}/candidates[/{id}]` | admin of the tenant | Create, update, delete a candidate |
+| POST | `/api/{slug}/candidates/{id}/photo` | admin of the tenant | Upload a photo |
+| GET | `/api/candidates?city=`, `/api/candidates/search?city=&name=`, `/api/candidates/{id}?city=` | public | Candidates of a city (mobile app) |
+| GET | `/api/offices?city=`, `/api/offices/{id}?city=` | public | Elected positions of a city |
+| GET | `/api/elections?city=` | public | Election date and offices of a city |
 
-Notes for API clients:
-- `electionDate` is `yyyy-MM-dd`; `dateSaved` is ISO-8601 UTC (`2026-10-10T22:37:03Z`).
-- `logoUrl` and `photoUrl` are absolute `https://` URLs.
-- Errors use the standard problem-details JSON (`title`, and `errors` for validation failures).
-  Status codes: 400 validation, 401 missing/invalid token or wrong login, 404 not found, 409 already saved.
+## Examples
 
-## Database and seed data
+### Log in
+```http
+POST /api/auth/login
+Content-Type: application/json
 
-One SQLite database (`app.db`) shared with the MVC site; EF Core Code First (`web/Data/Migrations`).
-On startup the app applies the migrations and, if the database is empty, loads sample data: 3
-municipalities (Pitt Meadows, Maple Ridge, Burnaby), 9 positions (Mayor, Councillor, School Trustee for
-each) and 18 fictional candidates, plus the roles and the admin users `super` (Super Admin) and `pm`
-(Pitt Meadows Admin), password `P@$$w0rd`. Placeholder images are in `web/wwwroot/images`.
-
-Tables: `AspNetUsers` (Identity, plus `Name`), `AspNetRoles`, `AspNetUserRoles`, `Municipalities`,
-`Positions`, `Candidates`, `SavedCandidates` (unique per user and candidate). The full diagram is in
-[erd.png](erd.png).
-
-## Run locally
-
-```bash
-cp web/appsettings.Development.example.json web/appsettings.Development.json
-# set Jwt:Key in that file to a random string of at least 32 characters:  openssl rand -base64 48
-dotnet run --project web --launch-profile http     # http://localhost:5276 (site) and /swagger (API)
+{ "email": "burnabyadmin", "password": "P@$$w0rd" }
+```
+```json
+{ "token": "eyJhbGciOiJIUzI1NiIsInR5..." }
 ```
 
-`appsettings.Development.json` is git-ignored (connection string and JWT key).
+### Who am I
+```http
+GET /api/auth/me
+Authorization: Bearer <token>
+```
+```json
+{ "name": "Burnaby Admin", "email": "burnabyadmin@example.com", "roles": ["Municipality Admin"], "municipalityId": 1 }
+```
 
-## Deployment (Azure App Service, Linux, .NET 10)
+### A municipality
+```http
+GET /api/municipalities/burnaby
+```
+```json
+{
+  "municipalityId": 1,
+  "name": "Burnaby",
+  "slug": "burnaby",
+  "province": "British Columbia",
+  "electionDate": "2026-10-17",
+  "description": "A large city in Metro Vancouver with several town centres and Burnaby Mountain.",
+  "logoUrl": "https://localhost:7261/images/logos/burnaby.png",
+  "themeColor": "#1f4e8c",
+  "welcomeMessage": "Welcome to the Burnaby election guide. Meet the candidates and plan your vote."
+}
+```
 
-- App settings on Azure: `Jwt__Key` (random secret) and
-  `ConnectionStrings__DefaultConnection` = `DataSource=/home/data/app.db;Cache=Shared`
-  (`/home` is persistent storage; the app creates the folder on startup).
-- Startup command (Configuration > Stack settings): `dotnet MunicipalElections.Web.dll`. Deployments only add
-  and overwrite files, so files of an older project name can stay in `/home/site/wwwroot`; with two
-  `*.runtimeconfig.json` files Azure cannot tell which app to run and shows its default welcome page instead.
-- GitHub Actions workflow `.github/workflows/main_municipalelections-api-mskim9097.yml`
-  publishes `web/` and deploys it when its code changes are pushed to `main`.
-  Changes under `docs/` or `ios/` do not redeploy it.
+### One candidate of the municipality
+```http
+GET /api/burnaby/candidates/10
+```
+```json
+{
+  "candidateId": 10,
+  "name": "Mei-Ling Tran",
+  "biography": "Community health director running on safer streets, transit and local small business.",
+  "photoUrl": "https://localhost:7261/images/candidates/c10.png",
+  "website": "https://example.com/meiling.tran",
+  "email": "meiling.tran@example.com",
+  "positionId": 4,
+  "positionName": "Mayor",
+  "municipalityId": 1,
+  "municipalityName": "Burnaby",
+  "createdDate": "2026-11-13T05:27:03.50826"
+}
+```
+
+### Create a candidate
+```http
+POST /api/burnaby/candidates
+Authorization: Bearer <token of burnabyadmin or super>
+Content-Type: application/json
+
+{ "name": "Jane Example", "positionId": 5, "biography": "Teacher and volunteer.", "email": "jane@example.com", "website": "https://example.com/jane" }
+```
+Response `201 Created` with the candidate (same shape as above; `municipalityId` and `municipalityName` come from the position).
+
+### Election of a city (mobile app)
+```http
+GET /api/elections?city=Burnaby
+```
+```json
+{
+  "municipalityId": 1,
+  "city": "Burnaby",
+  "slug": "burnaby",
+  "electionDate": "2026-10-17",
+  "province": "British Columbia",
+  "offices": [
+    { "positionId": 4, "name": "Mayor", "seatsAvailable": 1, "municipalityId": 1, "municipalityName": "Burnaby" },
+    { "positionId": 5, "name": "Councillor", "seatsAvailable": 8, "municipalityId": 1, "municipalityName": "Burnaby" },
+    { "positionId": 6, "name": "School Trustee", "seatsAvailable": 2, "municipalityId": 1, "municipalityName": "Burnaby" }
+  ]
+}
+```
+
+## Error responses
+
+Errors use the standard problem details format (`title`, `status`, and `errors` for validation). The text never contains stack traces, SQL or file paths; unexpected errors are logged on the server and answered with a general 500 message.
+
+| Status | When | Example body |
+|---|---|---|
+| 400 | Validation failed (required, email, length, seats 1-100, slug format, province list, image type or size) | `{ "title": "One or more validation errors occurred.", "status": 400, "errors": { "Name": ["Candidate name is required."], "Email": ["Enter a valid email address."] } }` |
+| 401 | No or invalid token, wrong password | `{ "title": "Unauthorized", "status": 401 }` |
+| 403 | Logged in but not allowed: another municipality's administrator, a user without a role, a Municipality Admin managing municipalities | `{ "title": "You can only access your own municipality.", "status": 403 }` |
+| 404 | Unknown municipality, or a row of another municipality | `{ "title": "Candidate not found.", "status": 404 }` |
+| 409 | Duplicate (municipality name or slug, position name, candidate name in a position), municipality that still has administrators | `{ "title": "A candidate named 'Jane Example' already runs for Councillor.", "status": 409 }` |
+| 500 | Unexpected error | `{ "title": "Something went wrong on the server. Please try again later.", "status": 500 }` |
+
+## Validation
+
+| Layer | Where |
+|---|---|
+| Client (Blazor) | `DataAnnotations` on the request classes in `MEMS.Shared` (`EditForm` in the Admin app) |
+| API | The same attributes on model binding (`[ApiController]`) plus the checks in the services (case-insensitive duplicates, http/https websites, province list, reserved slugs, image content) |
+| Database | Required columns, lengths, unique indexes (municipality name and slug, position name per municipality), `CHECK` on seats, foreign keys including the composite key that keeps a candidate in the tenant of its position |
+
+## Run and test
+
+```bash
+dotnet run --project src/MEMS.AppHost       # starts SQL Server, the Api, Admin and Public
+dotnet test tests/MEMS.Tests                # unit tests
+```
