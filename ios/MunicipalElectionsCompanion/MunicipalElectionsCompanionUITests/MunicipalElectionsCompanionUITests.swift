@@ -184,6 +184,115 @@ final class MunicipalElectionsCompanionUITests: XCTestCase {
         }
     }
 
+    // MARK: - Documentation (only with DEMO=1, i.e. TEST_RUNNER_DEMO=1)
+
+    private static let demoEmail = "demo.voter@example.com"
+    private static var demoEnabled: Bool { ProcessInfo.processInfo.environment["DEMO"] == "1" }
+
+    // Creates the demo user's selections in Firebase through the app (run once, with REAL_FIREBASE=1).
+    func testSeedDemoData() throws {
+        try XCTSkipUnless(Self.demoEnabled)
+        try ensureDemoAccount()
+        launch(autoLoginEmail: Self.demoEmail)
+        if app.navigationBars["Where do you live?"].waitForExistence(timeout: 30) {
+            chooseCity("Burnaby")
+        }
+        XCTAssertTrue(app.staticTexts["City: Burnaby"].firstMatch.waitForExistence(timeout: 30))
+        go(to: "Candidates")
+        let seeds = [("Mei-Ling Tran", "Strong on transit and safer streets."),
+                     ("Arjun Bhatia", "Likes the tree canopy plan."),
+                     ("Hannah Greenwood", ""),
+                     ("Oliver Fraser", "Focus on student well-being.")]
+        for (name, note) in seeds {
+            let button = candidateButton(name, index: 0)
+            XCTAssertTrue(button.waitForExistence(timeout: 20), name)
+            button.tap()
+            if app.buttons["Add Selection"].waitForExistence(timeout: 10) {
+                app.buttons["Add Selection"].tap()
+                if !note.isEmpty {
+                    let notes = app.textViews.firstMatch
+                    XCTAssertTrue(notes.waitForExistence(timeout: 10))
+                    notes.tap()
+                    notes.typeText(note)
+                }
+                tapSave()
+                XCTAssertTrue(app.buttons["Edit Selection"].waitForExistence(timeout: 20))
+            }
+            goBack()
+        }
+    }
+
+    // The screen captures for the project document, in portrait and landscape, with the demo user's data.
+    func testDocumentationScreens() throws {
+        try XCTSkipUnless(Self.demoEnabled)
+        // City selection: only a new user sees it.
+        launch(autoLoginEmail: try createAccount())
+        XCTAssertTrue(app.navigationBars["Where do you live?"].waitForExistence(timeout: 30))
+        shot("doc-03-city-selection")
+
+        try ensureDemoAccount()
+        launch(autoLoginEmail: Self.demoEmail)
+        XCTAssertTrue(app.staticTexts["City: Burnaby"].firstMatch.waitForExistence(timeout: 30))
+
+        for (name, orientation) in [("portrait", UIDeviceOrientation.portrait), ("landscape", .landscapeLeft)] {
+            XCUIDevice.shared.orientation = orientation
+            sleep(1)
+            go(to: "Home")
+            XCTAssertTrue(app.staticTexts["Municipal Elections Companion"].waitForExistence(timeout: 10))
+            shot("doc-\(name)-04-home")
+
+            go(to: "Candidates")
+            XCTAssertTrue(candidateButton("Mayor", index: 0).waitForExistence(timeout: 20))
+            shot("doc-\(name)-05-candidate-directory")
+
+            // A candidate that is saved: Edit and Delete buttons.
+            candidateButton("Mei-Ling Tran", index: 0).tap()
+            XCTAssertTrue(app.buttons["Edit Selection"].waitForExistence(timeout: 20))
+            shot("doc-\(name)-06-candidate-details-saved")
+            app.buttons["Edit Selection"].tap()
+            XCTAssertTrue(app.textViews.firstMatch.waitForExistence(timeout: 10))
+            shot("doc-\(name)-08-edit-selection")
+            app.buttons["Cancel"].tap()
+            goBack()
+
+            // A candidate that is not saved yet: Add Selection and the create sheet.
+            candidateButton("Victor Salazar", index: 0).tap()
+            XCTAssertTrue(app.buttons["Add Selection"].waitForExistence(timeout: 20))
+            shot("doc-\(name)-06b-candidate-details")
+            app.buttons["Add Selection"].tap()
+            let notes = app.textViews.firstMatch
+            XCTAssertTrue(notes.waitForExistence(timeout: 10))
+            notes.tap()
+            notes.typeText("Compare with the other mayor.")
+            shot("doc-\(name)-07-create-selection")
+            app.buttons["Cancel"].tap()
+            goBack()
+
+            go(to: "My Selections")
+            XCTAssertTrue(app.buttons["Edit"].firstMatch.waitForExistence(timeout: 20))
+            shot("doc-\(name)-09-selection-list")
+
+            go(to: "Profile")
+            XCTAssertTrue(app.staticTexts["Saved selections"].waitForExistence(timeout: 10))
+            shot("doc-\(name)-10-profile")
+        }
+    }
+
+    private func ensureDemoAccount() throws {
+        var request = URLRequest(url: URL(string: "\(apiBase)/api/auth/register")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["name": "Demo Voter", "email": Self.demoEmail, "password": Self.password])
+        let done = expectation(description: "register demo")
+        var status = 0
+        URLSession(configuration: .ephemeral, delegate: TrustLocalhost(), delegateQueue: nil).dataTask(with: request) { _, response, _ in
+            status = (response as? HTTPURLResponse)?.statusCode ?? 0
+            done.fulfill()
+        }.resume()
+        wait(for: [done], timeout: 60)
+        XCTAssertTrue(status == 200 || status == 400, "demo account could not be registered (\(status))") // 400: already exists
+    }
+
     // MARK: - Helpers
 
     private func launch(autoLoginEmail: String?) {

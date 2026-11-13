@@ -1,6 +1,6 @@
 # MEMS Web API
 
-ASP.NET Core Web API (.NET 10, EF Core, SQL Server, JWT) in `src/MEMS.Api`. It serves the Blazor public site and the iOS app. Swagger UI: `/swagger` (OpenAPI document: `/openapi/v1.json`). Health checks: `/health` and `/alive`.
+ASP.NET Core Web API (.NET 10, EF Core, JWT) in `src/MEMS.Api`. It uses SQL Server with Aspire and a SQLite file on Azure App Service (`Database__Provider=Sqlite`). It serves the Blazor public site and the iOS app. Swagger UI: `/swagger` (OpenAPI document: `/openapi/v1.json`). Health checks: `/health` and `/alive`.
 
 Local address: `https://localhost:7261` (started by the Aspire AppHost).
 

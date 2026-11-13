@@ -63,13 +63,25 @@ Besides these, the API, the admin site and the public site were checked end to e
 ## Documentation
 
 - [docs/api.md](docs/api.md): endpoints, request and response examples, error responses
-- [docs/erd.png](docs/erd.png), [docs/architecture.png](docs/architecture.png)
+- [docs/erd.png](docs/erd.png), [docs/architecture.png](docs/architecture.png), [docs/ios-architecture.png](docs/ios-architecture.png): diagrams (Mermaid sources: `docs/*.mmd`)
 - [docs/deficiency-report.md](docs/deficiency-report.md): how the Assignment 1 findings were fixed
 - `.github/`: `copilot-instructions.md`, prompts and skills for the AI assistants (GitHub Copilot, Claude Code), and the Azure deployment workflow
 
 ## Branches and deployment
 
-Work is done on a personal branch, merged into `dev`, and `dev` into `main`. A push to `main` that changes `src/` redeploys the Web API to Azure App Service (`.github/workflows`). Azure needs the SQL connection string (`ConnectionStrings__memsdb`), `Jwt__Key` and the start command `dotnet MEMS.Api.dll`.
+Work is done on a personal branch, merged into `dev2` (`dev` still holds Assignment 1), and `dev2` into `main`. A push to `main` that changes `src/` redeploys only the Web API (`MEMS.Api`) to Azure App Service (`.github/workflows`); the Blazor Admin and Public sites run locally with Aspire.
+
+The deployed Api is used by the iOS app. To save Azure credits it stores its data in a **SQLite file** instead of SQL Server (the Api supports both; the Aspire setup for the .NET assignment uses SQL Server). The App Service needs these settings:
+
+| Setting | Value |
+|---|---|
+| `Database__Provider` | `Sqlite` |
+| `ConnectionStrings__memsdb` | `Data Source=/home/data/mems.db` |
+| `Jwt__Key` | a random string of at least 32 characters |
+| `Uploads__Path` | `/home/data/uploads` |
+| Startup command | `dotnet MEMS.Api.dll` |
+
+The database file is created and seeded when the Api starts.
 
 ## Submission
 

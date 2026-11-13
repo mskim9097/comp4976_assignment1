@@ -9,6 +9,7 @@ using MEMS.Data.Seed;
 using MEMS.Data.Services;
 using MEMS.Shared;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -16,12 +17,37 @@ using Microsoft.IdentityModel.Tokens;
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
-// Database: the connection string "memsdb" comes from the Aspire AppHost.
+// Database: SQL Server with the connection string "memsdb" from the Aspire AppHost (development). The Azure deployment
+// for the iOS app uses a SQLite file instead (SQL Server would cost credits): set Database__Provider=Sqlite and
+// ConnectionStrings__memsdb="Data Source=/home/data/mems.db".
 builder.Services.AddMemsServices(builder.Configuration);
+var connectionString = builder.Configuration.GetConnectionString("memsdb");
+var useSqlite = string.Equals(builder.Configuration["Database:Provider"], "Sqlite", StringComparison.OrdinalIgnoreCase);
+if (useSqlite)
+{
+    // The folder of the database file must exist (on Azure: /home/data, which is kept between restarts).
+    var dataSource = new SqliteConnectionStringBuilder(connectionString).DataSource;
+    if (Path.GetDirectoryName(Path.GetFullPath(dataSource)) is { } folder)
+    {
+        Directory.CreateDirectory(folder);
+    }
+}
 // Not a pooled context: it takes the scoped TenantContext. Aspire adds health checks, telemetry and retries.
 builder.Services.AddDbContext<MemsDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("memsdb")));
-builder.EnrichSqlServerDbContext<MemsDbContext>();
+{
+    if (useSqlite)
+    {
+        options.UseSqlite(connectionString);
+    }
+    else
+    {
+        options.UseSqlServer(connectionString);
+    }
+});
+if (!useSqlite)
+{
+    builder.EnrichSqlServerDbContext<MemsDbContext>();
+}
 builder.Services.AddMemsIdentity();
 
 // JWT bearer authentication for administrators and the mobile app.

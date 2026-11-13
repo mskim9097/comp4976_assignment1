@@ -16,7 +16,15 @@ public static class MemsDbSeeder
     public static async Task InitializeAsync(IServiceProvider services)
     {
         var context = services.GetRequiredService<MemsDbContext>();
-        await context.Database.MigrateAsync();
+        if (context.Database.IsSqlServer())
+        {
+            await context.Database.MigrateAsync();
+        }
+        else
+        {
+            // SQLite (the Azure deployment): the migrations are written for SQL Server, so the schema is created from the model.
+            await context.Database.EnsureCreatedAsync();
+        }
 
         await SeedDomainAsync(context);
         await SeedIdentityAsync(

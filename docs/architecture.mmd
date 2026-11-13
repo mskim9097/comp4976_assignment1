@@ -1,0 +1,51 @@
+flowchart LR
+  Voters(["Voters<br/>browser"])
+  iOS(["iOS app"])
+  Admins(["Administrators"])
+
+  subgraph Aspire[".NET Aspire"]
+    direction LR
+    subgraph Pub["MEMS.Public"]
+      direction TB
+      B["/burnaby<br/>Blazor WebAssembly"]
+      S["/surrey<br/>Blazor WebAssembly"]
+      R["/richmond<br/>Blazor WebAssembly"]
+    end
+    Admin["MEMS.Admin<br/>Blazor Server /admin<br/>shared by all municipalities"]
+    Api["MEMS.Api<br/>ASP.NET Web API<br/>TenantScopeFilter"]
+    Data["MEMS.Data + MEMS.Shared<br/>EF Core, tenant query filters"]
+    subgraph DB["SQL Server"]
+      direction TB
+      BR["Burnaby rows<br/>MunicipalityId = 1"]
+      SR["Surrey rows<br/>MunicipalityId = 2"]
+      RR["Richmond rows<br/>MunicipalityId = 3"]
+      PR["Pitt Meadows rows<br/>MunicipalityId = 4"]
+    end
+  end
+
+  Voters --> B
+  Voters --> S
+  Voters --> R
+  B -->|"/api/burnaby"| Api
+  S -->|"/api/surrey"| Api
+  R -->|"/api/richmond"| Api
+  iOS -->|"HTTPS + JWT, ?city="| Api
+  Admins --> Admin
+  Api --> Data
+  Admin --> Data
+  Data --> BR
+  Data --> SR
+  Data --> RR
+  Data --> PR
+
+  classDef blue fill:#eef4fc,stroke:#1f4e8c,stroke-width:2px;
+  classDef purple fill:#f4effa,stroke:#6a3d9a,stroke-width:2px;
+  classDef red fill:#fdeeed,stroke:#b3261e,stroke-width:2px;
+  classDef green fill:#edf7f1,stroke:#2d6a4f,stroke-width:2px;
+  classDef orange fill:#fff5e8,stroke:#b86b12,stroke-width:2px;
+  class B,BR blue
+  class S,SR purple
+  class R,RR red
+  class PR,Admin green
+  class Api orange
+  class Data purple

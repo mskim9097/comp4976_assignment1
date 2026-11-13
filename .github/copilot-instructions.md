@@ -34,7 +34,7 @@ BCIT COMP4976 (Blazor, multi-tenant) and COMP4977 (iOS app that uses the same We
 - Seed data (4 municipalities, 12 positions, 25 candidates, roles and users `super`, `pm`, `burnabyadmin`, `surreyadmin`, `richmondadmin`, password `P@$$w0rd`) is created by `MemsDbSeeder` at Api start-up.
 
 ## Do not
-- Do not use SQLite, MVC views or the Identity UI package.
+- Do not use MVC views or the Identity UI package. SQL Server is the database of the .NET solution (Aspire); SQLite is only used by the deployed Api on Azure (`Database__Provider=Sqlite`, schema from `EnsureCreated`, because the migrations are written for SQL Server). Keep the model free of provider-specific features.
 - Do not commit `*.db`, `uploads/`, `bin/`, `obj/` or build output.
 - Do not edit generated migrations; add a new one: `dotnet tool run dotnet-ef migrations add <Name> --project src/MEMS.Data`.
 - Do not merge into `main` without checking the Azure deployment (a push to `main` redeploys the Api).
