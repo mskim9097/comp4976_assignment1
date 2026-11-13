@@ -21,7 +21,7 @@ final class Session {
     var needsCity: Bool { isAuthenticated && profile != nil && profile?.city == nil }
 
     init(services: AppServices? = nil) {
-        self.services = services ?? .current()
+        self.services = services ?? .live()
         let saved = TokenStore.load()
         self.token = saved
         self.isRestoring = saved != nil

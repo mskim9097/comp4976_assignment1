@@ -17,7 +17,6 @@ MEMS is a multi-tenant application. Every municipality is a tenant with its own 
 | `src/MEMS.Api` | ASP.NET Web API (JWT, tenant isolation, Swagger) |
 | `src/MEMS.Admin` | Blazor Server administration site (`/admin`, ASP.NET Core Identity) |
 | `src/MEMS.Public` | Blazor WebAssembly public site (one app, tenant from the URL) |
-| `tests/MEMS.Tests` | xUnit tests |
 | `ios/` | SwiftUI app "Municipal Elections Companion" (COMP4977) |
 | `docs/` | API documentation, ERD, architecture diagram |
 
@@ -52,18 +51,10 @@ The public site reads the Api address from `src/MEMS.Public/wwwroot/appsettings.
 
 Seed data: 4 municipalities, 12 positions (Mayor, Councillor, School Trustee), 25 fictional candidates. People who register in the iOS app are normal users without a role and cannot log in to the admin site.
 
-## Tests
-
-```bash
-dotnet test tests/MEMS.Tests               # 44 tests, no Docker needed (in-memory database)
-```
-
-Besides these, the API, the admin site and the public site were checked end to end (curl and a headless browser) with the Aspire stack running; see the project document.
-
 ## Documentation
 
 - [docs/api.md](docs/api.md): endpoints, request and response examples, error responses
-- [docs/erd.png](docs/erd.png), [docs/architecture.png](docs/architecture.png), [docs/ios-architecture.png](docs/ios-architecture.png): diagrams (Mermaid sources: `docs/*.mmd`)
+- [docs/erd.png](docs/erd.png), [docs/architecture.png](docs/architecture.png), [docs/ios-architecture.png](docs/ios-architecture.png): diagrams
 - [docs/deficiency-report.md](docs/deficiency-report.md): how the Assignment 1 findings were fixed
 - `.github/`: `copilot-instructions.md`, prompts and skills for the AI assistants (GitHub Copilot, Claude Code), and the Azure deployment workflow
 

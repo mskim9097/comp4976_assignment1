@@ -11,4 +11,3 @@ All uploads go through `src/MEMS.Data/Services/ImageFileStore.cs` (the services 
 - `DeleteUploaded` only deletes files with a GUID name, so the seed images in `MEMS.Api/wwwroot/images` are never removed. Old files are deleted after the database change succeeded.
 - The Admin app and the Api share the folder through `Uploads__Path` (set by the AppHost). The Api serves it under `/images/...` next to its own `wwwroot`.
 - Forms use `InputFile` with `accept`, show the limits, and catch the size exception of `OpenReadStream`.
-- Tests: `tests/MEMS.Tests/ImageFileStoreTests.cs`.

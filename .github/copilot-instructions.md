@@ -10,7 +10,6 @@ BCIT COMP4976 (Blazor, multi-tenant) and COMP4977 (iOS app that uses the same We
 - `MEMS.Api`: ASP.NET Web API (controllers, JWT, `TenantScopeFilter`, `ApiExceptionHandler`, Swagger). It is the only project that migrates and seeds the database.
 - `MEMS.Admin`: Blazor Server under `/admin`, Identity cookie login. Every data operation runs through `AdminSession.RunAsync`.
 - `MEMS.Public`: Blazor WebAssembly. It has no reference to `MEMS.Data` and never touches the database; it only calls `/api/{slug}/...`.
-- `tests/MEMS.Tests`: xUnit tests (tenant isolation, service rules, shared rules, image uploads).
 
 ## Multi-tenancy (the most important rule)
 - A municipality is a tenant. Its `Slug` is in the public URL (`/burnaby`). `Position`, `Candidate` and `ApplicationUser` carry the tenant in `MunicipalityId`.

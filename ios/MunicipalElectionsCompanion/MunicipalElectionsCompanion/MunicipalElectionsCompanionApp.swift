@@ -5,7 +5,6 @@ import FirebaseCore
 struct MunicipalElectionsCompanionApp: App {
     // Firebase needs the GoogleService-Info.plist of the Firebase project; without it the app explains what is missing.
     private static let firebaseConfigured: Bool = {
-        guard !AppServices.usesFakeFirebase else { return false }
         guard Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil else { return false }
         FirebaseApp.configure()
         return true
@@ -17,7 +16,7 @@ struct MunicipalElectionsCompanionApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if Self.firebaseConfigured || AppServices.usesFakeFirebase {
+            if Self.firebaseConfigured {
                 RootView()
                     .environment(session)
                     .environment(election)

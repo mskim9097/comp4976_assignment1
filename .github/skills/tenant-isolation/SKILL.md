@@ -15,4 +15,3 @@ Rules for new code:
 - Load parents through the filtered services; copy the tenant from the parent.
 - A restricted scope can create or change only inside its tenant. Managing municipalities and administrator accounts is Super Admin only (the services check `TenantContext.IsRestricted`).
 - `TenantContext.Restrict` can be repeated with the same id but throws for another id.
-- Tests: `tests/MEMS.Tests/TenantIsolationTests.cs` shows the pattern (`TestHost`, two tenants, restricted scopes).

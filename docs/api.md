@@ -148,9 +148,8 @@ Errors use the standard problem details format (`title`, `status`, and `errors` 
 | API | The same attributes on model binding (`[ApiController]`) plus the checks in the services (case-insensitive duplicates, http/https websites, province list, reserved slugs, image content) |
 | Database | Required columns, lengths, unique indexes (municipality name and slug, position name per municipality), `CHECK` on seats, foreign keys including the composite key that keeps a candidate in the tenant of its position |
 
-## Run and test
+## Run
 
 ```bash
 dotnet run --project src/MEMS.AppHost       # starts SQL Server, the Api, Admin and Public
-dotnet test tests/MEMS.Tests                # unit tests
 ```

@@ -8,15 +8,7 @@ struct RootView: View {
 
     var body: some View {
         content
-            .task {
-                if AppServices.debugResetSession {
-                    session.logout()
-                }
-                await session.restore()
-                if let credentials = AppServices.debugCredentials, !session.isAuthenticated {
-                    try? await session.login(email: credentials.email, password: credentials.password)
-                }
-            }
+            .task { await session.restore() }
             .onChange(of: session.isAuthenticated) {
                 if !session.isAuthenticated {
                     election.clear()
