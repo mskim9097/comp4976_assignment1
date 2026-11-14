@@ -39,6 +39,14 @@ The first start pulls the SQL Server 2022 image. The Api creates the database, a
 
 The public site reads the Api address from `src/MEMS.Public/wwwroot/appsettings.json` (a browser app cannot use the server-side service discovery); it matches the fixed Api port in `launchSettings.json`.
 
+iOS app (macOS with Xcode only): open `ios/MunicipalElectionsCompanion/MunicipalElectionsCompanion.xcodeproj`, pick an iPhone or iPad simulator and press Run. See [ios/README.md](ios/README.md).
+
+## Deployed API (for the iOS app)
+
+| What | URL |
+|---|---|
+| Web API, Swagger UI at `/swagger` | https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net |
+
 ## Test accounts (password for all: `P@$$w0rd`)
 
 | User | Role | Tenant |
@@ -76,9 +84,16 @@ The database file is created and seeded when the Api starts.
 
 ## Submission
 
-The same repository is submitted for COMP4976 and COMP4977. The iOS project must not be in the COMP4976 (.NET) zip.
+The same repository is submitted for COMP4976 and COMP4977. The **iOS project must not be in the COMP4976 zip**; the COMP4977 zip has everything.
+
+Create the zips from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`):
 
 ```bash
+# COMP4976 (.NET): everything except the iOS app
 git archive --format=zip --prefix=MEMS/ -o MEMS-COMP4976.zip main -- . ':(exclude)ios'
+
+# COMP4977 (iOS): the complete repository, including ios/
 git archive --format=zip --prefix=MEMS/ -o MEMS-COMP4977.zip main
 ```
+
+Each zip also needs its own project document (Word for COMP4976, PDF for COMP4977). Links to `ios/` do not resolve inside the COMP4976 zip.

@@ -10,7 +10,7 @@ Source of the issues: the instructor's marking feedback for Assignment 1 (94% wi
 | Voting guide: a visitor cannot choose candidates from multiple cities (-2) | The browser list accepted candidates of any municipality, so one printed guide could mix cities. | One guide per browser tab (`sessionStorage` key `mems.guide`). The first choice fixes the municipality; a candidate of another municipality is refused with a message (`SelectionRules.CheckAdd`). |
 | Voting guide: a visitor cannot choose more than one mayor (-2) | No limit per position. | A position accepts at most `SeatsAvailable` choices (Mayor 1, Councillor 8, ...). The rule is in `MEMS.Shared` so the Blazor site and the iOS app share it. |
 | Admins should not have the option to short list candidates (-2) | The "add to preferred candidates" tools were also shown to logged-in administrators. | Administrators use the separate Admin app, which has no voter tools; the public site has no administrator features. Voters' choices live only in their own browser. |
-| Source ZIP not found in the D2L folder (-1) | The archive could not be confirmed in the submission folder. | Submission checklist in the README: build the zip from `main`, re-download it from D2L and compare it with the local file (done for Assignment 1 and repeated for Assignment 2). |
+| Source ZIP not found in the D2L folder (-1) | The archive could not be confirmed in the submission folder. | Submission checklist in the README: build the zips from `main`, then download them again from D2L and compare them with the local files. |
 
 ## Problems we found ourselves
 
