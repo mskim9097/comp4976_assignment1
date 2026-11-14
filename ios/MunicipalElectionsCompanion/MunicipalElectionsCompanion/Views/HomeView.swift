@@ -31,7 +31,7 @@ struct HomeView: View {
 
                     Text("Elected positions").font(.headline)
                     LazyVGrid(columns: AdaptiveLayout.columns(minimum: 260), spacing: 12) {
-                        ForEach(current.offices) { office in
+                        ForEach(election.offices) { office in
                             OfficeCard(office: office, selected: selections.count(positionId: office.positionId))
                         }
                     }
@@ -61,25 +61,6 @@ struct HomeView: View {
                     .foregroundStyle(.secondary)
             }
         }
-    }
-}
-
-private struct OfficeCard: View {
-    let office: Position
-    let selected: Int
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(office.name).font(.headline)
-            Text(office.seatsAvailable == 1 ? "1 seat" : "\(office.seatsAvailable) seats")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            Text("You selected \(selected) of \(office.seatsAvailable)")
-                .font(.caption)
-                .foregroundStyle(selected == office.seatsAvailable ? .green : .secondary)
-        }
-        .cardBackground()
-        .accessibilityElement(children: .combine)
     }
 }
 

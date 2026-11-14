@@ -27,3 +27,12 @@ struct CardBackground: ViewModifier {
 extension View {
     func cardBackground() -> some View { modifier(CardBackground()) }
 }
+
+#Preview {
+    LazyVGrid(columns: AdaptiveLayout.columns(), spacing: 12) {
+        ForEach(0..<4, id: \.self) { index in
+            Text("Card \(index + 1)").cardBackground()
+        }
+    }
+    .padding()
+}
