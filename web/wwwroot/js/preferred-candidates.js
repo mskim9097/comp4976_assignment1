@@ -50,6 +50,51 @@
         return;
     }
 
+    const sanitizePreferredCandidates = () => {
+        const sanitized = [];
+        let selectedMunicipality = "";
+        let hasMayor = false;
+
+        preferredCandidates.forEach((candidate) => {
+            const municipality = typeof candidate.municipality === "string" ? candidate.municipality.trim() : "";
+            const position = typeof candidate.position === "string" ? candidate.position.trim() : "";
+            const isMayor = position.toLowerCase() === "mayor";
+
+            if (!municipality || !position) {
+                return;
+            }
+
+            if (selectedMunicipality && municipality !== selectedMunicipality) {
+                return;
+            }
+
+            if (isMayor && hasMayor) {
+                return;
+            }
+
+            sanitized.push(candidate);
+            if (!selectedMunicipality) {
+                selectedMunicipality = municipality;
+            }
+            if (isMayor) {
+                hasMayor = true;
+            }
+        });
+
+        if (sanitized.length !== preferredCandidates.length) {
+            preferredCandidates = sanitized;
+            try {
+                window.localStorage.setItem(storageKey, JSON.stringify(preferredCandidates));
+            } catch (error) {
+                showError("Your preferred-candidate list could not be saved in local storage. Check your browser storage settings and try again.");
+                return;
+            }
+            showError("Your preferred-candidate list was updated to keep only one municipality and one mayor.");
+        }
+    };
+
+    sanitizePreferredCandidates();
+
     let municipalityElectionDates;
     try {
         municipalityElectionDates = JSON.parse(printGuide.dataset.municipalityElectionDates || "{}");
@@ -67,6 +112,20 @@
             showError("Your preferred-candidate list could not be saved in local storage. Check your browser storage settings and try again.");
             return false;
         }
+    };
+
+    const canAddCandidate = (candidate) => {
+        if (preferredCandidates.length > 0 && preferredCandidates[0].municipality !== candidate.municipality) {
+            showError("You can only save candidates from the same city in your preferred-candidate list.");
+            return false;
+        }
+
+        if (candidate.position.toLowerCase() === "mayor" && preferredCandidates.some((selectedCandidate) => selectedCandidate.position.toLowerCase() === "mayor")) {
+            showError("You can only save one mayor in your preferred-candidate list.");
+            return false;
+        }
+
+        return true;
     };
 
     const createText = (tagName, className, text) => {
@@ -240,6 +299,11 @@
                 website: card.dataset.candidateWebsite || "",
                 photo: card.dataset.candidatePhoto || ""
             };
+
+            if (!canAddCandidate(candidate)) {
+                return;
+            }
+
             preferredCandidates = [...preferredCandidates, candidate];
             if (!persist()) {
                 preferredCandidates = preferredCandidates.filter((item) => item.id !== candidateId);

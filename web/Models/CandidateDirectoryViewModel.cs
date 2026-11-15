@@ -15,6 +15,7 @@ public class CandidateDirectoryViewModel
     [Display(Name = "Position")]
     public int? PositionId { get; set; }
 
+    public bool CanShortlistCandidates { get; set; } = true;
     public List<SelectListItem> Municipalities { get; set; } = [];
     public List<SelectListItem> Positions { get; set; } = [];
     public List<Candidate> Candidates { get; set; } = [];

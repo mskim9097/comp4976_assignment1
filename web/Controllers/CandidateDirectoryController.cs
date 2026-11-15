@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -7,24 +8,53 @@ using MunicipalElections.Web.Models;
 
 namespace MunicipalElections.Web.Controllers;
 
-public class CandidateDirectoryController(ApplicationDbContext context) : Controller
+public class CandidateDirectoryController(
+    ApplicationDbContext context,
+    UserManager<ApplicationUser> userManager) : Controller
 {
     [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> Index(CandidateDirectoryViewModel filters)
     {
-        var municipalities = await context.Municipalities
+        filters ??= new CandidateDirectoryViewModel();
+
+        var userRoleNames = await GetCurrentUserRoleNamesAsync();
+        var managedMunicipalityIds = await GetManagedMunicipalityIdsAsync(userRoleNames);
+        var isAdmin = userRoleNames.Contains(DbSeeder.SuperAdminRole) || managedMunicipalityIds.Count > 0;
+        filters.CanShortlistCandidates = !isAdmin;
+
+        var municipalitiesQuery = context.Municipalities
             .AsNoTracking()
             .OrderBy(m => m.Name)
-            .ToListAsync();
+            .AsQueryable();
+
+        if (managedMunicipalityIds.Count > 0)
+        {
+            municipalitiesQuery = municipalitiesQuery.Where(m => managedMunicipalityIds.Contains(m.MunicipalityId));
+        }
+
+        var municipalities = await municipalitiesQuery.ToListAsync();
+
         var positionsQuery = context.Positions
             .AsNoTracking()
             .Include(p => p.Municipality)
             .AsQueryable();
 
+        if (managedMunicipalityIds.Count > 0)
+        {
+            positionsQuery = positionsQuery.Where(p => managedMunicipalityIds.Contains(p.MunicipalityId));
+        }
+
         if (filters.MunicipalityId is int municipalityId)
         {
-            positionsQuery = positionsQuery.Where(p => p.MunicipalityId == municipalityId);
+            if (managedMunicipalityIds.Count > 0 && !managedMunicipalityIds.Contains(municipalityId))
+            {
+                filters.MunicipalityId = null;
+            }
+            else
+            {
+                positionsQuery = positionsQuery.Where(p => p.MunicipalityId == municipalityId);
+            }
         }
 
         var positions = await positionsQuery
@@ -37,6 +67,11 @@ public class CandidateDirectoryController(ApplicationDbContext context) : Contro
             .Include(c => c.Position!)
                 .ThenInclude(p => p.Municipality);
 
+        if (managedMunicipalityIds.Count > 0)
+        {
+            candidatesQuery = candidatesQuery.Where(c => managedMunicipalityIds.Contains(c.Position!.MunicipalityId));
+        }
+
         if (filters.MunicipalityId is int selectedMunicipalityId)
         {
             candidatesQuery = candidatesQuery
@@ -45,7 +80,14 @@ public class CandidateDirectoryController(ApplicationDbContext context) : Contro
 
         if (filters.PositionId is int positionId)
         {
-            candidatesQuery = candidatesQuery.Where(c => c.PositionId == positionId);
+            if (managedMunicipalityIds.Count > 0 && !positions.Any(p => p.PositionId == positionId))
+            {
+                filters.PositionId = null;
+            }
+            else
+            {
+                candidatesQuery = candidatesQuery.Where(c => c.PositionId == positionId);
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(filters.Search))
@@ -75,5 +117,43 @@ public class CandidateDirectoryController(ApplicationDbContext context) : Contro
             .ToList();
 
         return View(filters);
+    }
+
+    private async Task<HashSet<string>> GetCurrentUserRoleNamesAsync()
+    {
+        if (User.Identity is null || !User.Identity.IsAuthenticated)
+        {
+            return new HashSet<string>(StringComparer.Ordinal);
+        }
+
+        var user = await userManager.GetUserAsync(User);
+        if (user is null)
+        {
+            return new HashSet<string>(StringComparer.Ordinal);
+        }
+
+        var roles = await userManager.GetRolesAsync(user);
+        return new HashSet<string>(roles, StringComparer.Ordinal);
+    }
+
+    private async Task<List<int>> GetManagedMunicipalityIdsAsync(ISet<string> userRoles)
+    {
+        if (userRoles.Count == 0)
+        {
+            return [];
+        }
+
+        if (userRoles.Contains(DbSeeder.SuperAdminRole))
+        {
+            return [];
+        }
+
+        var adminRoleNames = await context.Municipalities
+            .AsNoTracking()
+            .Where(m => userRoles.Contains(m.AdminRoleName))
+            .Select(m => m.MunicipalityId)
+            .ToListAsync();
+
+        return adminRoleNames;
     }
 }
