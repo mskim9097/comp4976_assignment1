@@ -1,0 +1,108 @@
+@page "/tenants/{Id:int}/admins"
+@attribute [Authorize(Policy = MemsPolicies.SuperAdmin)]
+@inherits AdminPage
+@using MEMS.Data.Entities
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Administrators</PageTitle>
+
+@if (tenant is null)
+{
+    <div class="alert alert-danger">Municipality not found.</div>
+}
+else
+{
+    <h1>@tenant.Name administrators</h1>
+    <p class="text-muted">A Municipality Admin belongs to exactly one municipality and can only manage its positions and candidates.</p>
+    <Feedback Success="@success" Error="@error" />
+
+    <table class="table align-middle mb-4">
+        <thead><tr><th>User name</th><th>Name</th><th>Email</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var a in admins)
+        {
+            <tr>
+                <td>@a.UserName</td><td>@a.DisplayName</td><td>@a.Email</td>
+                <td class="text-end"><button class="btn btn-sm btn-outline-danger" @onclick="() => RemoveAsync(a)">Remove</button></td>
+            </tr>
+        }
+        @if (admins.Count == 0) { <tr><td colspan="4" class="text-muted">No administrators yet.</td></tr> }
+        </tbody>
+    </table>
+
+    <h2 class="h4">Add administrator</h2>
+    <EditForm Model="form" OnValidSubmit="CreateAsync" class="row g-3" style="max-width: 40rem;">
+        <DataAnnotationsValidator />
+        <div class="col-md-6"><label class="form-label" for="u">User name</label>
+            <InputText id="u" class="form-control" @bind-Value="form.UserName" /><ValidationMessage For="() => form.UserName" class="text-danger" /></div>
+        <div class="col-md-6"><label class="form-label" for="n">Full name</label>
+            <InputText id="n" class="form-control" @bind-Value="form.DisplayName" /><ValidationMessage For="() => form.DisplayName" class="text-danger" /></div>
+        <div class="col-md-6"><label class="form-label" for="e">Email</label>
+            <InputText id="e" class="form-control" @bind-Value="form.Email" /><ValidationMessage For="() => form.Email" class="text-danger" /></div>
+        <div class="col-md-6"><label class="form-label" for="p">Password</label>
+            <InputText id="p" type="password" class="form-control" @bind-Value="form.Password" /><ValidationMessage For="() => form.Password" class="text-danger" /></div>
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" type="submit">Create administrator</button>
+            <a class="btn btn-outline-secondary" href="tenants">Back</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private MunicipalityDto? tenant;
+    private List<ApplicationUser> admins = [];
+    private CreateAdminRequest form = new();
+    private string? success, error;
+
+    private UserManager<ApplicationUser> Users => ScopedServices.GetRequiredService<UserManager<ApplicationUser>>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Admin.EnsureLoadedAsync();
+        tenant = await Municipalities.GetAsync(Scope, Id);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync() =>
+        admins = tenant is null ? [] : await Users.Users.AsNoTracking()
+            .Where(u => u.MunicipalityId == Id).OrderBy(u => u.UserName).ToListAsync();
+
+    private async Task CreateAsync()
+    {
+        success = error = null;
+        var user = new ApplicationUser
+        {
+            UserName = form.UserName.Trim(), Email = form.Email.Trim(), DisplayName = form.DisplayName.Trim(),
+            EmailConfirmed = true, MunicipalityId = Id
+        };
+        var created = await Users.CreateAsync(user, form.Password);
+        if (!created.Succeeded)
+        {
+            error = string.Join(" ", created.Errors.Select(e => e.Description));
+            return;
+        }
+
+        var role = await Users.AddToRoleAsync(user, MemsRoles.MunicipalityAdmin);
+        if (!role.Succeeded)
+        {
+            await Users.DeleteAsync(user);
+            error = string.Join(" ", role.Errors.Select(e => e.Description));
+            return;
+        }
+
+        success = $"Administrator '{user.UserName}' created for {tenant!.Name}.";
+        form = new();
+        await LoadAsync();
+    }
+
+    private async Task RemoveAsync(ApplicationUser user)
+    {
+        success = error = null;
+        var result = await Users.DeleteAsync(user);
+        if (result.Succeeded) success = $"'{user.UserName}' was removed."; else error = string.Join(" ", result.Errors.Select(e => e.Description));
+        await LoadAsync();
+    }
+}

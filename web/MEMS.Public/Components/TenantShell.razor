@@ -1,0 +1,107 @@
+@inject ApiClient Api
+@inject BallotStore Ballot
+@implements IDisposable
+
+@* Loads the municipality for the tenant in the URL (/burnaby), applies its theme and shows its navigation. Every
+   child page receives the tenant and only ever asks the API for THAT tenant's data. *@
+
+@if (loading)
+{
+    <div class="container py-5 text-center text-muted">Loading...</div>
+}
+else if (error is not null)
+{
+    <div class="container py-5">
+        <div class="alert alert-danger" role="alert">@error</div>
+        <button class="btn btn-primary" @onclick="LoadAsync">Try again</button>
+    </div>
+}
+else if (tenant is null)
+{
+    <PageTitle>Municipality not found</PageTitle>
+    <div class="container py-5">
+        <h1>We could not find "@Slug"</h1>
+        <p>There is no municipality with that web address.</p>
+        <a class="btn btn-primary" href="">See all municipalities</a>
+    </div>
+}
+else
+{
+    <PageTitle>@(Title is null ? tenant.Name : $"{Title} - {tenant.Name}")</PageTitle>
+    <div style="--tenant-color: @tenant.ThemeColor">
+        <nav class="navbar navbar-expand-md tenant-bar mb-4">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2 text-white" href="@tenant.Slug">
+                    @if (tenant.LogoUrl is not null) { <img class="tenant-logo" src="@Api.Absolute(tenant.LogoUrl)" alt="@tenant.Name logo" /> }
+                    <span>@tenant.Name</span>
+                </a>
+                <button class="navbar-toggler border-light" type="button" data-bs-toggle="collapse" data-bs-target="#tenantNav" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="tenantNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><NavLink class="nav-link" href="@($"{tenant.Slug}/candidates")">Candidates</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="@($"{tenant.Slug}/positions")">Positions</NavLink></li>
+                        <li class="nav-item">
+                            <NavLink class="nav-link" href="@($"{tenant.Slug}/guide")">My voting guide
+                                <span class="badge text-bg-light">@Ballot.Items.Count</span></NavLink>
+                        </li>
+                    </ul>
+                    <a class="nav-link" href="">Other municipalities</a>
+                </div>
+            </div>
+        </nav>
+        <div class="container pb-5">
+            @ChildContent(tenant)
+        </div>
+        <footer class="container border-top py-3 text-muted small">
+            Your choices stay in this browser tab only. They are never sent to or stored on any server.
+        </footer>
+    </div>
+}
+
+@code {
+    private MunicipalityDto? tenant;
+    private bool loading = true;
+    private string? error;
+    private string? loadedSlug;
+
+    [Parameter, EditorRequired] public string Slug { get; set; } = string.Empty;
+    [Parameter] public string? Title { get; set; }
+    [Parameter, EditorRequired] public RenderFragment<MunicipalityDto> ChildContent { get; set; } = default!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.Equals(loadedSlug, Slug, StringComparison.OrdinalIgnoreCase))
+        {
+            await LoadAsync();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Ballot.Changed += OnBallotChanged;
+        await Ballot.EnsureLoadedAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        error = null;
+        try
+        {
+            tenant = await Api.GetTenantAsync(Slug);
+            loadedSlug = Slug;
+        }
+        catch (ApiUnavailableException ex)
+        {
+            error = ex.Message;
+            tenant = null;
+        }
+        loading = false;
+    }
+
+    private void OnBallotChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Ballot.Changed -= OnBallotChanged;
+}

@@ -1,0 +1,3 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Plain class library: referenced by the API, the Admin app, the Data project AND the Blazor WebAssembly site. -->
+</Project>

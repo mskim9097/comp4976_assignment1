@@ -1,0 +1,5 @@
+.tenant-logo { height: 3rem; width: 3rem; object-fit: contain; }
+.candidate-photo { height: 3rem; width: 3rem; object-fit: cover; border-radius: .375rem; }
+.candidate-photo-lg { max-height: 20rem; max-width: 100%; object-fit: cover; border-radius: .5rem; }
+.validation-message, .text-danger { font-size: .875rem; }
+#blazor-error-ui { display: none; }

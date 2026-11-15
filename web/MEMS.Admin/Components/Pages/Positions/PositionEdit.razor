@@ -1,0 +1,63 @@
+@page "/positions/new"
+@page "/positions/{Id:int}/edit"
+@attribute [Authorize(Policy = MemsPolicies.AnyAdmin)]
+@inherits AdminPage
+
+<PageTitle>@(Id is null ? "Add position" : "Edit position")</PageTitle>
+<h1>@(Id is null ? "Add position" : "Edit position")</h1>
+
+@if (notFound)
+{
+    <div class="alert alert-danger">Position not found, or it belongs to another municipality.</div>
+}
+else if (model is not null)
+{
+    <p class="text-muted">Municipality: <strong>@Admin.ActiveTenant?.Name</strong></p>
+    <Feedback Error="@error" />
+    <EditForm Model="model" OnValidSubmit="SaveAsync" class="row g-3" style="max-width: 32rem;">
+        <DataAnnotationsValidator />
+        <div class="col-12"><label class="form-label" for="name">Position name</label>
+            <InputText id="name" class="form-control" @bind-Value="model.Name" /><ValidationMessage For="() => model.Name" class="text-danger" /></div>
+        <div class="col-12"><label class="form-label" for="seats">Seats available</label>
+            <InputNumber id="seats" class="form-control" @bind-Value="model.SeatsAvailable" /><ValidationMessage For="() => model.SeatsAvailable" class="text-danger" /></div>
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" type="submit" disabled="@saving">Save</button>
+            <a class="btn btn-outline-secondary" href="positions">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private PositionRequest? model;
+    private string? error;
+    private bool notFound, saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Admin.EnsureLoadedAsync();
+        if (Admin.ActiveTenantId is not int tenantId) { notFound = true; return; }
+
+        if (Id is int id)
+        {
+            var position = await Positions.GetAsync(tenantId, id);
+            if (position is null) { notFound = true; return; }
+            model = new PositionRequest { Name = position.Name, SeatsAvailable = position.SeatsAvailable };
+        }
+        else model = new PositionRequest();
+    }
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        var tenantId = Admin.ActiveTenantId!.Value;
+        var result = Id is int id
+            ? await Positions.UpdateAsync(Scope, tenantId, id, model!)
+            : await Positions.CreateAsync(Scope, tenantId, model!);
+
+        if (result.Succeeded) { Navigation.NavigateTo("positions"); return; }
+        error = result.Message;
+        saving = false;
+    }
+}

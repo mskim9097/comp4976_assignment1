@@ -1,0 +1,80 @@
+@page "/positions"
+@attribute [Authorize(Policy = MemsPolicies.AnyAdmin)]
+@inherits AdminPage
+
+<PageTitle>Positions</PageTitle>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1>Positions</h1>
+        <p class="text-muted mb-0">@(Admin.ActiveTenant is { } t ? $"Elected positions in {t.Name}." : "No municipality selected.")</p>
+    </div>
+    @if (Admin.ActiveTenantId is not null) { <a class="btn btn-primary" href="positions/new">Add position</a> }
+</div>
+
+<Feedback Success="@success" Error="@error" />
+
+@if (positions is null)
+{
+    <p>Loading...</p>
+}
+else if (positions.Count == 0)
+{
+    <div class="alert alert-info">No positions yet for this municipality.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Position</th><th>Seats</th><th>Candidates</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var p in positions)
+            {
+                <tr>
+                    <td>@p.Name</td><td>@p.SeatsAvailable</td><td>@p.CandidateCount</td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-primary" href="positions/@p.PositionId/edit">Edit</a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => confirmDelete = p">Delete</button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (confirmDelete is not null)
+{
+    <div class="alert alert-warning" role="alert">
+        Delete <strong>@confirmDelete.Name</strong>?
+        <button class="btn btn-danger btn-sm ms-2" @onclick="DeleteAsync">Yes, delete</button>
+        <button class="btn btn-secondary btn-sm" @onclick="() => confirmDelete = null">Cancel</button>
+    </div>
+}
+
+@code {
+    private List<PositionDto>? positions;
+    private PositionDto? confirmDelete;
+    private string? success, error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Admin.EnsureLoadedAsync();
+        await LoadAsync();
+    }
+
+    protected override Task OnTenantChangedAsync() => LoadAsync();
+
+    private async Task LoadAsync() =>
+        positions = Admin.ActiveTenantId is int id ? await Positions.ListAsync(id) : [];
+
+    private async Task DeleteAsync()
+    {
+        var target = confirmDelete!;
+        confirmDelete = null;
+        var result = await Positions.DeleteAsync(Scope, Admin.ActiveTenantId!.Value, target.PositionId);
+        success = result.Succeeded ? $"'{target.Name}' was deleted." : null;
+        error = result.Succeeded ? null : result.Message;
+        await LoadAsync();
+    }
+}

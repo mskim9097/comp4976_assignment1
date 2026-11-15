@@ -1,0 +1,68 @@
+@page "/{Tenant}/guide"
+@inject BallotStore Ballot
+@inject IJSRuntime Js
+
+<TenantShell Slug="@Tenant" Title="My voting guide">
+    <div class="@(includePhotos ? "" : "guide-hide-photos")">
+        <h1 class="tenant-heading mb-1">My voting guide</h1>
+        <p class="print-only mb-1">Printed on <strong>@DateTime.Now.ToString("MMMM d, yyyy h:mm tt")</strong></p>
+        <p class="text-muted no-print">
+            Saved only in this browser tab. It disappears when you close the tab, and nobody else can see it.
+            You can choose several candidates for a position and candidates from different municipalities.
+        </p>
+
+        @if (Ballot.Items.Count == 0)
+        {
+            <div class="alert alert-info no-print">You have not chosen any candidates yet.
+                <a href="@($"{context.Slug}/candidates")">Browse candidates</a>.</div>
+        }
+        else
+        {
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-4 no-print">
+                <span class="badge text-bg-secondary">@Ballot.Items.Count selected</span>
+                <div class="form-check mb-0">
+                    <input id="photos" class="form-check-input" type="checkbox" @bind="includePhotos" />
+                    <label class="form-check-label" for="photos">Print photos</label>
+                </div>
+                <button class="btn btn-tenant" type="button" @onclick="PrintAsync">Print guide</button>
+                <button class="btn btn-outline-danger" type="button" @onclick="Ballot.ClearAsync">Clear all</button>
+            </div>
+
+            @foreach (var group in Ballot.Items.GroupBy(i => (i.Slug, i.MunicipalityName, i.ElectionDate)).OrderBy(g => g.Key.MunicipalityName))
+            {
+                <section class="guide-group mb-4">
+                    <h2 class="h4">@group.Key.MunicipalityName</h2>
+                    <p class="text-muted">Election date: <strong>@FormatDate(group.Key.ElectionDate)</strong></p>
+                    <ul class="list-unstyled">
+                    @foreach (var item in group.OrderBy(i => i.PositionName).ThenBy(i => i.CandidateName))
+                    {
+                        <li class="d-flex align-items-center gap-3 border-bottom py-2">
+                            @if (!string.IsNullOrEmpty(item.PhotoUrl)) { <img class="candidate-thumb" src="@item.PhotoUrl" alt="Photo of @item.CandidateName" /> }
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">@item.CandidateName</div>
+                                <div class="text-muted small">@item.PositionName</div>
+                            </div>
+                            <a class="btn btn-sm btn-outline-secondary no-print" href="@($"{item.Slug}/candidates/{item.CandidateId}")">Profile</a>
+                            <button class="btn btn-sm btn-outline-danger no-print" type="button"
+                                    @onclick="() => Ballot.RemoveAsync(item.Slug, item.CandidateId)">Remove</button>
+                        </li>
+                    }
+                    </ul>
+                </section>
+            }
+        }
+    </div>
+</TenantShell>
+
+@code {
+    [Parameter] public string Tenant { get; set; } = string.Empty;
+
+    private bool includePhotos = true;
+
+    protected override async Task OnInitializedAsync() => await Ballot.EnsureLoadedAsync();
+
+    private static string FormatDate(string value) =>
+        DateOnly.TryParse(value, out var date) ? date.ToString("MMMM d, yyyy") : value;
+
+    private async Task PrintAsync() => await Js.InvokeVoidAsync("window.print");
+}

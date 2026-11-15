@@ -1,0 +1,76 @@
+@inherits LayoutComponentBase
+@inject AdminContext Admin
+@implements IDisposable
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">MEMS Admin</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav" aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav">
+            <AuthorizeView Policy="@MemsPolicies.AnyAdmin">
+                <Authorized>
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><NavLink class="nav-link" href="" Match="NavLinkMatch.All">Dashboard</NavLink></li>
+                        @if (Admin.Scope.IsSuperAdmin)
+                        {
+                            <li class="nav-item"><NavLink class="nav-link" href="tenants">Municipalities</NavLink></li>
+                        }
+                        <li class="nav-item"><NavLink class="nav-link" href="positions">Positions</NavLink></li>
+                        <li class="nav-item"><NavLink class="nav-link" href="candidates">Candidates</NavLink></li>
+                    </ul>
+                    <div class="d-flex align-items-center gap-3 text-light">
+                        @if (Admin.Scope.IsSuperAdmin && Admin.Tenants.Count > 0)
+                        {
+                            <label class="small mb-0" for="tenant-picker">Working in</label>
+                            <select id="tenant-picker" class="form-select form-select-sm w-auto" value="@Admin.ActiveTenantId" @onchange="OnTenantPicked">
+                                @foreach (var tenant in Admin.Tenants)
+                                {
+                                    <option value="@tenant.MunicipalityId">@tenant.Name</option>
+                                }
+                            </select>
+                        }
+                        else if (Admin.ActiveTenant is { } own)
+                        {
+                            <span class="badge text-bg-info">@own.Name</span>
+                        }
+                        <span class="small">@context.User.Identity?.Name</span>
+                        <form action="account/logout" method="post" class="mb-0">
+                            <AntiforgeryToken />
+                            <button type="submit" class="btn btn-outline-light btn-sm">Sign out</button>
+                        </form>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</nav>
+
+<main class="container py-4">
+    <ErrorBoundary>
+        <ChildContent>@Body</ChildContent>
+        <ErrorContent>
+            <div class="alert alert-danger" role="alert">
+                Something went wrong while showing this page. Please try again; if it keeps happening, contact support.
+            </div>
+        </ErrorContent>
+    </ErrorBoundary>
+</main>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Admin.Changed += OnChanged;
+        await Admin.EnsureLoadedAsync();
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private void OnTenantPicked(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id)) Admin.SelectTenant(id);
+    }
+
+    public void Dispose() => Admin.Changed -= OnChanged;
+}

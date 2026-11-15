@@ -1,0 +1,19 @@
+@page "/error"
+@attribute [AllowAnonymous]
+@using System.Diagnostics
+
+<PageTitle>Error</PageTitle>
+<div class="container py-5">
+    <h1>Something went wrong</h1>
+    <p>An unexpected error occurred. Nothing you entered was lost on the server; please go back and try again.</p>
+    @if (RequestId is not null)
+    {
+        <p class="text-muted small">Reference: <code>@RequestId</code></p>
+    }
+    <a class="btn btn-primary" href="">Back to the dashboard</a>
+</div>
+
+@code {
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+    private string? RequestId => Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

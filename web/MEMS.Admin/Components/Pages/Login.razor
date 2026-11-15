@@ -1,0 +1,47 @@
+@page "/login"
+@attribute [AllowAnonymous]
+
+<PageTitle>Sign in</PageTitle>
+
+@* Plain HTML form posted to the /account/login endpoint (Program.cs). Signing in writes a cookie, which needs an ordinary
+   HTTP response, so it deliberately does not go through a Blazor form handler. *@
+<div class="container py-5" style="max-width: 28rem;">
+    <h1 class="h3 mb-3">MEMS administration</h1>
+    <p class="text-muted">Sign in as the Super Admin or as the administrator of a municipality.</p>
+
+    @if (Error == "invalid")
+    {
+        <div class="alert alert-danger" role="alert">Invalid user name or password.</div>
+    }
+    else if (Error == "locked")
+    {
+        <div class="alert alert-danger" role="alert">This account is temporarily locked after too many attempts. Try again in a few minutes.</div>
+    }
+    else if (Error == "missing")
+    {
+        <div class="alert alert-danger" role="alert">Enter your user name and password.</div>
+    }
+
+    <form method="post" action="account/login">
+        <AntiforgeryToken />
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+        <div class="mb-3">
+            <label class="form-label" for="username">User name</label>
+            <input id="username" name="userName" class="form-control" autocomplete="username" required />
+        </div>
+        <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input id="password" name="password" type="password" class="form-control" autocomplete="current-password" required />
+        </div>
+        <div class="form-check mb-3">
+            <input id="remember" name="rememberMe" type="checkbox" value="true" class="form-check-input" />
+            <label class="form-check-label" for="remember">Remember me</label>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Sign in</button>
+    </form>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] private string? ReturnUrl { get; set; }
+    [SupplyParameterFromQuery] private string? Error { get; set; }
+}

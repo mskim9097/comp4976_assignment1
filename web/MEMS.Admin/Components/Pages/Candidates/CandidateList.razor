@@ -1,0 +1,102 @@
+@page "/candidates"
+@attribute [Authorize(Policy = MemsPolicies.AnyAdmin)]
+@inherits AdminPage
+
+<PageTitle>Candidates</PageTitle>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1>Candidates</h1>
+        <p class="text-muted mb-0">@(Admin.ActiveTenant is { } t ? $"Candidates standing in {t.Name}." : "No municipality selected.")</p>
+    </div>
+    @if (Admin.ActiveTenantId is not null) { <a class="btn btn-primary" href="candidates/new">Add candidate</a> }
+</div>
+
+<Feedback Success="@success" Error="@error" />
+
+<div class="row g-2 mb-3">
+    <div class="col-md-5"><input class="form-control" placeholder="Search by name" @bind="search" @bind:event="oninput" @bind:after="LoadAsync" /></div>
+    <div class="col-md-4">
+        <select class="form-select" @bind="positionId" @bind:after="LoadAsync">
+            <option value="0">All positions</option>
+            @foreach (var p in positions) { <option value="@p.PositionId">@p.Name</option> }
+        </select>
+    </div>
+</div>
+
+@if (candidates is null)
+{
+    <p>Loading...</p>
+}
+else if (candidates.Count == 0)
+{
+    <div class="alert alert-info">No candidates match.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Photo</th><th>Name</th><th>Position</th><th>Email</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var c in candidates)
+            {
+                <tr>
+                    <td>@if (c.PhotoUrl is not null) { <img class="candidate-photo" src="@PhotoSrc(c)" alt="Photo of @c.Name" /> }</td>
+                    <td>@c.Name</td><td>@c.PositionName</td><td>@c.Email</td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" href="candidates/@c.CandidateId">View</a>
+                        <a class="btn btn-sm btn-outline-primary" href="candidates/@c.CandidateId/edit">Edit</a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => confirmDelete = c">Delete</button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (confirmDelete is not null)
+{
+    <div class="alert alert-warning" role="alert">
+        Delete <strong>@confirmDelete.Name</strong>?
+        <button class="btn btn-danger btn-sm ms-2" @onclick="DeleteAsync">Yes, delete</button>
+        <button class="btn btn-secondary btn-sm" @onclick="() => confirmDelete = null">Cancel</button>
+    </div>
+}
+
+@code {
+    private List<CandidateDto>? candidates;
+    private List<PositionDto> positions = [];
+    private CandidateDto? confirmDelete;
+    private string? search, success, error;
+    private int positionId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Admin.EnsureLoadedAsync();
+        await ReloadAllAsync();
+    }
+
+    protected override Task OnTenantChangedAsync() { positionId = 0; return ReloadAllAsync(); }
+
+    private async Task ReloadAllAsync()
+    {
+        positions = Admin.ActiveTenantId is int id ? await Positions.ListAsync(id) : [];
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync() =>
+        candidates = Admin.ActiveTenantId is int id
+            ? await Candidates.ListAsync(id, search, positionId == 0 ? null : positionId)
+            : [];
+
+    private async Task DeleteAsync()
+    {
+        var target = confirmDelete!;
+        confirmDelete = null;
+        var result = await Candidates.DeleteAsync(Scope, Admin.ActiveTenantId!.Value, target.CandidateId);
+        success = result.Succeeded ? $"'{target.Name}' was deleted." : null;
+        error = result.Succeeded ? null : result.Message;
+        await LoadAsync();
+    }
+}

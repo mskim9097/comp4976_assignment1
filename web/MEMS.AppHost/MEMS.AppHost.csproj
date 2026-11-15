@@ -1,0 +1,19 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.0.0">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>mems-apphost-7c1f3b0e-5d52-4f3e-9a55-3a6e0f0c1b11</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="13.0.0" />
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MEMS.Api\MEMS.Api.csproj" />
+    <ProjectReference Include="..\MEMS.Admin\MEMS.Admin.csproj" />
+    <ProjectReference Include="..\MEMS.Public\MEMS.Public.csproj" />
+  </ItemGroup>
+
+</Project>

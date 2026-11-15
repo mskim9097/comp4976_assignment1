@@ -1,0 +1,105 @@
+@page "/candidates/new"
+@page "/candidates/{Id:int}/edit"
+@attribute [Authorize(Policy = MemsPolicies.AnyAdmin)]
+@inherits AdminPage
+
+<PageTitle>@(Id is null ? "Add candidate" : "Edit candidate")</PageTitle>
+<h1>@(Id is null ? "Add candidate" : "Edit candidate")</h1>
+
+@if (notFound)
+{
+    <div class="alert alert-danger">Candidate not found, or it belongs to another municipality.</div>
+}
+else if (model is not null)
+{
+    <p class="text-muted">Municipality: <strong>@Admin.ActiveTenant?.Name</strong></p>
+    @if (positions.Count == 0)
+    {
+        <div class="alert alert-warning">Create a position first; every candidate stands for a position.</div>
+    }
+    <Feedback Error="@error" />
+    <EditForm Model="model" OnValidSubmit="SaveAsync" class="row g-3" style="max-width: 44rem;">
+        <DataAnnotationsValidator />
+        <div class="col-md-7"><label class="form-label" for="name">Candidate name</label>
+            <InputText id="name" class="form-control" @bind-Value="model.Name" /><ValidationMessage For="() => model.Name" class="text-danger" /></div>
+        <div class="col-md-5"><label class="form-label" for="position">Position</label>
+            <InputSelect id="position" class="form-select" @bind-Value="model.PositionId">
+                <option value="0">Select a position...</option>
+                @foreach (var p in positions) { <option value="@p.PositionId">@p.Name</option> }
+            </InputSelect>
+            <ValidationMessage For="() => model.PositionId" class="text-danger" /></div>
+        <div class="col-12"><label class="form-label" for="profile">Biography / profile</label>
+            <InputTextArea id="profile" class="form-control" rows="5" @bind-Value="model.Profile" />
+            <div class="form-text">@(model.Profile?.Length ?? 0) / 2000</div>
+            <ValidationMessage For="() => model.Profile" class="text-danger" /></div>
+        <div class="col-md-6"><label class="form-label" for="web">Website (optional)</label>
+            <InputText id="web" class="form-control" @bind-Value="model.Website" /><ValidationMessage For="() => model.Website" class="text-danger" /></div>
+        <div class="col-md-6"><label class="form-label" for="email">Email (optional)</label>
+            <InputText id="email" class="form-control" @bind-Value="model.Email" /><ValidationMessage For="() => model.Email" class="text-danger" /></div>
+        <div class="col-12"><label class="form-label">Photograph</label>
+            @if (current?.PhotoUrl is not null)
+            {
+                <div class="mb-2"><img class="candidate-photo" src="@PhotoSrc(current)" alt="Current photo" /> <span class="text-muted small">Current photo</span></div>
+            }
+            <ImageUpload FileSelected="file => photo = file" /></div>
+        <div class="col-12 d-flex gap-2">
+            <button class="btn btn-primary" type="submit" disabled="@(saving || positions.Count == 0)">Save</button>
+            <a class="btn btn-outline-secondary" href="candidates">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private CandidateRequest? model;
+    private CandidateDto? current;
+    private List<PositionDto> positions = [];
+    private (string FileName, byte[] Data)? photo;
+    private string? error;
+    private bool notFound, saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Admin.EnsureLoadedAsync();
+        if (Admin.ActiveTenantId is not int tenantId) { notFound = true; return; }
+
+        positions = await Positions.ListAsync(tenantId);
+        if (Id is int id)
+        {
+            current = await Candidates.GetAsync(tenantId, id);
+            if (current is null) { notFound = true; return; }
+            model = new CandidateRequest
+            {
+                Name = current.Name, PositionId = current.PositionId, Profile = current.Profile,
+                Website = current.Website, Email = current.Email
+            };
+        }
+        else model = new CandidateRequest();
+    }
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        error = null;
+        var tenantId = Admin.ActiveTenantId!.Value;
+        var result = Id is int id
+            ? await Candidates.UpdateAsync(Scope, tenantId, id, model!)
+            : await Candidates.CreateAsync(Scope, tenantId, model!);
+
+        if (!result.Succeeded) { error = result.Message; saving = false; return; }
+
+        if (photo is { } file)
+        {
+            var photoResult = await Candidates.SetPhotoAsync(Scope, tenantId, result.Value!.CandidateId, file.FileName, file.Data);
+            if (!photoResult.Succeeded)
+            {
+                error = $"The candidate was saved, but the photo was rejected: {photoResult.Message}";
+                saving = false;
+                return;
+            }
+        }
+
+        Navigation.NavigateTo("candidates");
+    }
+}

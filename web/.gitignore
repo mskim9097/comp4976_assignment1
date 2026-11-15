@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+*.log
+# Local secrets / connection strings (assignment requirement: never commit these)
+appsettings.Development.json
+**/appsettings.Development.json
+secrets.json
+.env
+launchSettings.local.json

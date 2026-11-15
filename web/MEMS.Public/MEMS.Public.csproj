@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.12" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- DTOs only. The public site has NO reference to MEMS.Data: it can never reach the database, only the API. -->
+    <ProjectReference Include="..\MEMS.Shared\MEMS.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

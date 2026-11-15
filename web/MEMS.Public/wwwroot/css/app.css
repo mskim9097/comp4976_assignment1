@@ -1,0 +1,33 @@
+:root { --tenant-color: #0d6efd; }
+
+#blazor-error-ui {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+    background: #ffffe0; padding: .6rem 1.25rem; box-shadow: 0 -1px 2px rgba(0,0,0,.2);
+}
+#blazor-error-ui .dismiss { cursor: pointer; position: absolute; right: .75rem; top: .5rem; }
+
+/* Each tenant site gets its own accent color from the municipality record. */
+.tenant-bar { background: var(--tenant-color); color: #fff; }
+.tenant-bar a, .tenant-bar .nav-link { color: #fff; }
+.tenant-bar .nav-link.active { font-weight: 700; text-decoration: underline; }
+.btn-tenant { background: var(--tenant-color); border-color: var(--tenant-color); color: #fff; }
+.btn-tenant:hover { filter: brightness(.9); color: #fff; }
+.btn-outline-tenant { border-color: var(--tenant-color); color: var(--tenant-color); }
+.btn-outline-tenant:hover { background: var(--tenant-color); color: #fff; }
+.tenant-heading { border-left: .4rem solid var(--tenant-color); padding-left: .75rem; }
+
+.tenant-logo { height: 2.5rem; width: 2.5rem; object-fit: contain; background: #fff; border-radius: .375rem; }
+.tenant-logo-lg { height: 8rem; max-width: 100%; object-fit: contain; }
+.candidate-card-photo { height: 14rem; object-fit: cover; }
+.candidate-thumb { height: 4rem; width: 4rem; object-fit: cover; border-radius: .375rem; }
+
+/* Printable voting guide */
+.print-only { display: none; }
+@media print {
+    .no-print, nav, footer { display: none !important; }
+    .print-only { display: block; }
+    body { background: #fff; color: #000; }
+    .guide-group { break-inside: avoid; page-break-inside: avoid; }
+    .candidate-thumb { height: 3rem; width: 3rem; }
+    .guide-hide-photos .candidate-thumb { display: none; }
+}

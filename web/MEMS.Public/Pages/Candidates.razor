@@ -1,0 +1,109 @@
+@page "/{Tenant}/candidates"
+@inject ApiClient Api
+@inject BallotStore Ballot
+@inject NavigationManager Navigation
+
+<TenantShell Slug="@Tenant" Title="Candidates">
+    <h1 class="tenant-heading mb-3">Candidates in @context.Name</h1>
+
+    <div class="row g-2 mb-3">
+        <div class="col-md-5">
+            <label class="visually-hidden" for="search">Search candidates by name</label>
+            <input id="search" class="form-control" placeholder="Search by name" @bind="search" @bind:event="oninput" @bind:after="LoadAsync" />
+        </div>
+        <div class="col-md-4">
+            <label class="visually-hidden" for="position">Filter by position</label>
+            <select id="position" class="form-select" @bind="positionId" @bind:after="LoadAsync">
+                <option value="0">All positions</option>
+                @foreach (var p in positions) { <option value="@p.PositionId">@p.Name</option> }
+            </select>
+        </div>
+        <div class="col-md-3"><a class="btn btn-outline-secondary w-100" href="@($"{context.Slug}/candidates")" @onclick="Clear" @onclick:preventDefault>Clear filters</a></div>
+    </div>
+
+    @if (error is not null) { <div class="alert alert-danger">@error</div> }
+    else if (candidates is null) { <p class="text-muted">Loading...</p> }
+    else if (candidates.Count == 0) { <div class="alert alert-info">No candidates match these filters.</div> }
+    else
+    {
+        <p class="text-muted">@candidates.Count candidate(s)</p>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        @foreach (var c in candidates)
+        {
+            var chosen = Ballot.Contains(context.Slug, c.CandidateId);
+            <div class="col">
+                <article class="card h-100">
+                    @if (c.PhotoUrl is not null) { <img class="card-img-top candidate-card-photo" src="@Api.Absolute(c.PhotoUrl)" alt="Photo of @c.Name" /> }
+                    <div class="card-body">
+                        <h2 class="h5 card-title">@c.Name</h2>
+                        <p class="small text-muted mb-2">@c.PositionName</p>
+                        @if (!string.IsNullOrWhiteSpace(c.Profile)) { <p class="card-text">@Shorten(c.Profile)</p> }
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <a class="btn btn-sm btn-outline-tenant" href="@($"{context.Slug}/candidates/{c.CandidateId}")">View profile</a>
+                            <button type="button" class="btn btn-sm @(chosen ? "btn-outline-danger" : "btn-tenant")" aria-pressed="@chosen"
+                                    @onclick="() => ToggleAsync(context, c)">
+                                @(chosen ? "Remove from my guide" : "Add to my guide")
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        }
+        </div>
+    }
+</TenantShell>
+
+@code {
+    [Parameter] public string Tenant { get; set; } = string.Empty;
+    [SupplyParameterFromQuery(Name = "positionId")] public int? InitialPositionId { get; set; }
+
+    private List<CandidateDto>? candidates;
+    private List<PositionDto> positions = [];
+    private string? search, error;
+    private int positionId;
+    private string? loadedFor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loadedFor == Tenant) return;
+        loadedFor = Tenant;
+        positionId = InitialPositionId ?? 0;
+        try
+        {
+            positions = await Api.GetPositionsAsync(Tenant);
+            await LoadAsync();
+        }
+        catch (ApiUnavailableException ex) { error = ex.Message; }
+    }
+
+    private async Task LoadAsync()
+    {
+        error = null;
+        try { candidates = await Api.GetCandidatesAsync(Tenant, search, positionId == 0 ? null : positionId); }
+        catch (ApiUnavailableException ex) { error = ex.Message; }
+    }
+
+    private async Task Clear()
+    {
+        search = null;
+        positionId = 0;
+        await LoadAsync();
+    }
+
+    // Any candidate for any position (several mayors, for example) and from any municipality can be chosen.
+    private async Task ToggleAsync(MunicipalityDto tenant, CandidateDto c)
+    {
+        if (Ballot.Contains(tenant.Slug, c.CandidateId))
+        {
+            await Ballot.RemoveAsync(tenant.Slug, c.CandidateId);
+        }
+        else
+        {
+            await Ballot.AddAsync(new BallotItem(
+                tenant.Slug, tenant.Name, tenant.ElectionDate.ToString("yyyy-MM-dd"),
+                c.CandidateId, c.Name, c.PositionName, c.PhotoUrl is null ? null : Api.Absolute(c.PhotoUrl)));
+        }
+    }
+
+    private static string Shorten(string text) => text.Length <= 140 ? text : text[..140].TrimEnd() + "...";
+}

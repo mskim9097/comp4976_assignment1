@@ -1,0 +1,87 @@
+@page "/tenants"
+@attribute [Authorize(Policy = MemsPolicies.SuperAdmin)]
+@inherits AdminPage
+
+<PageTitle>Municipalities</PageTitle>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h1>Municipalities (tenants)</h1>
+        <p class="text-muted mb-0">Each municipality has its own public site at <code>/{slug}</code>.</p>
+    </div>
+    <a class="btn btn-primary" href="tenants/new">Add municipality</a>
+</div>
+
+<Feedback Success="@success" Error="@error" />
+
+@if (tenants is null)
+{
+    <p>Loading...</p>
+}
+else if (tenants.Count == 0)
+{
+    <div class="alert alert-info">No municipalities yet.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead><tr><th>Logo</th><th>Name</th><th>URL segment</th><th>Election date</th><th>Positions</th><th>Candidates</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var t in tenants)
+            {
+                <tr>
+                    <td>@if (t.LogoUrl is not null) { <img class="tenant-logo" src="@LogoSrc(t)" alt="@t.Name logo" /> }</td>
+                    <td>@t.Name <span class="text-muted small">(@t.Province)</span></td>
+                    <td><code>/@t.Slug</code></td>
+                    <td>@t.ElectionDate.ToString("yyyy-MM-dd")</td>
+                    <td>@t.PositionCount</td>
+                    <td>@t.CandidateCount</td>
+                    <td class="text-end text-nowrap">
+                        <a class="btn btn-sm btn-outline-secondary" href="tenants/@t.MunicipalityId/admins">Administrators</a>
+                        <a class="btn btn-sm btn-outline-primary" href="tenants/@t.MunicipalityId/edit">Edit</a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => confirmDelete = t">Delete</button>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (confirmDelete is not null)
+{
+    <div class="alert alert-warning" role="alert">
+        <strong>Delete @confirmDelete.Name?</strong> This permanently removes its @confirmDelete.PositionCount positions,
+        @confirmDelete.CandidateCount candidates and its administrator accounts.
+        <div class="mt-2">
+            <button class="btn btn-danger btn-sm" @onclick="DeleteAsync">Yes, delete</button>
+            <button class="btn btn-secondary btn-sm" @onclick="() => confirmDelete = null">Cancel</button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<MunicipalityDto>? tenants;
+    private MunicipalityDto? confirmDelete;
+    private string? success, error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Admin.EnsureLoadedAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync() => tenants = await Municipalities.ListAsync(Scope);
+
+    private async Task DeleteAsync()
+    {
+        var target = confirmDelete!;
+        confirmDelete = null;
+        var result = await Municipalities.DeleteAsync(Scope, target.MunicipalityId);
+        success = result.Succeeded ? $"'{target.Name}' was deleted." : null;
+        error = result.Succeeded ? null : result.Message;
+        await Admin.RefreshTenantsAsync();
+        await LoadAsync();
+    }
+}

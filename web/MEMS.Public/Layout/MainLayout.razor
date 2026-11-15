@@ -1,0 +1,19 @@
+@inherits LayoutComponentBase
+
+<ErrorBoundary @ref="boundary">
+    <ChildContent>@Body</ChildContent>
+    <ErrorContent>
+        <div class="container py-5">
+            <div class="alert alert-danger" role="alert">
+                Something went wrong showing this page.
+                <a href="" class="alert-link">Start again</a>
+            </div>
+        </div>
+    </ErrorContent>
+</ErrorBoundary>
+
+@code {
+    private ErrorBoundary? boundary;
+
+    protected override void OnParametersSet() => boundary?.Recover();
+}

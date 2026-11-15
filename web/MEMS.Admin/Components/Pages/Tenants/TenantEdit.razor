@@ -1,0 +1,129 @@
+@page "/tenants/new"
+@page "/tenants/{Id:int}/edit"
+@attribute [Authorize(Policy = MemsPolicies.SuperAdmin)]
+@inherits AdminPage
+
+<PageTitle>@(Id is null ? "Add municipality" : "Edit municipality")</PageTitle>
+<h1>@(Id is null ? "Add municipality" : "Edit municipality")</h1>
+
+@if (notFound)
+{
+    <div class="alert alert-danger">Municipality not found.</div>
+}
+else if (model is not null)
+{
+    <Feedback Error="@error" />
+    <EditForm Model="model" OnValidSubmit="SaveAsync" class="row g-3" style="max-width: 44rem;">
+        <DataAnnotationsValidator />
+        <div class="col-md-6">
+            <label class="form-label" for="name">Name</label>
+            <InputText id="name" class="form-control" @bind-Value="model.Name" @oninput="OnNameInput" />
+            <ValidationMessage For="() => model.Name" class="text-danger" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="slug">URL segment (slug)</label>
+            <InputText id="slug" class="form-control" @bind-Value="model.Slug" />
+            <div class="form-text">The public site will be at /@(string.IsNullOrEmpty(model.Slug) ? "slug" : model.Slug)</div>
+            <ValidationMessage For="() => model.Slug" class="text-danger" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label" for="province">Province</label>
+            <InputSelect id="province" class="form-select" @bind-Value="model.Province">
+                @foreach (var p in MunicipalityRules.Provinces) { <option value="@p">@p</option> }
+            </InputSelect>
+            <ValidationMessage For="() => model.Province" class="text-danger" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="date">Election date</label>
+            <InputDate id="date" class="form-control" @bind-Value="model.ElectionDate" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="color">Theme color</label>
+            <InputText id="color" type="color" class="form-control form-control-color" @bind-Value="model.ThemeColor" />
+            <ValidationMessage For="() => model.ThemeColor" class="text-danger" />
+        </div>
+        <div class="col-12">
+            <label class="form-label" for="description">Description</label>
+            <InputTextArea id="description" class="form-control" rows="4" @bind-Value="model.Description" />
+            <ValidationMessage For="() => model.Description" class="text-danger" />
+        </div>
+        <div class="col-12">
+            <label class="form-label">Logo</label>
+            @if (current?.LogoUrl is not null)
+            {
+                <div class="mb-2"><img class="tenant-logo" src="@LogoSrc(current)" alt="Current logo" /> <span class="text-muted small">Current logo</span></div>
+            }
+            <ImageUpload FileSelected="file => logo = file" />
+        </div>
+        <div class="col-12 d-flex gap-2">
+            <button type="submit" class="btn btn-primary" disabled="@saving">Save</button>
+            <a class="btn btn-outline-secondary" href="tenants">Cancel</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private MunicipalityRequest? model;
+    private MunicipalityDto? current;
+    private (string FileName, byte[] Data)? logo;
+    private string? error;
+    private bool notFound, saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Admin.EnsureLoadedAsync();
+        if (Id is int id)
+        {
+            current = await Municipalities.GetAsync(Scope, id);
+            if (current is null) { notFound = true; return; }
+            model = new MunicipalityRequest
+            {
+                Name = current.Name, Slug = current.Slug, Province = current.Province, ElectionDate = current.ElectionDate,
+                Description = current.Description, ThemeColor = current.ThemeColor
+            };
+        }
+        else
+        {
+            model = new MunicipalityRequest();
+        }
+    }
+
+    // While creating, suggest a slug from the name until the admin types their own.
+    private void OnNameInput(ChangeEventArgs e)
+    {
+        model!.Name = e.Value?.ToString() ?? string.Empty;
+        if (Id is null) model.Slug = SlugRules.Suggest(model.Name);
+    }
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        error = null;
+        var result = Id is int id
+            ? await Municipalities.UpdateAsync(Scope, id, model!)
+            : await Municipalities.CreateAsync(Scope, model!);
+
+        if (result.Succeeded && logo is { } file)
+        {
+            var logoResult = await Municipalities.SetLogoAsync(Scope, result.Value!.MunicipalityId, file.FileName, file.Data);
+            if (!logoResult.Succeeded)
+            {
+                error = $"The municipality was saved, but the logo was rejected: {logoResult.Message}";
+                saving = false;
+                return;
+            }
+        }
+
+        if (result.Succeeded)
+        {
+            await Admin.RefreshTenantsAsync();
+            Navigation.NavigateTo("tenants");
+            return;
+        }
+
+        error = result.Message;
+        saving = false;
+    }
+}

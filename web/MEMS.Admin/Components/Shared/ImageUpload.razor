@@ -1,0 +1,37 @@
+@* Reads an uploaded image into memory (2 MB cap) so the service can validate its content. *@
+<InputFile OnChange="OnFileChosen" accept=".png,.jpg,.jpeg,.gif,.webp" class="form-control" />
+<div class="form-text">@ImageRules.AllowedDescription.</div>
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="text-danger">@error</div>
+}
+
+@code {
+    private string? error;
+
+    [Parameter] public EventCallback<(string FileName, byte[] Data)?> FileSelected { get; set; }
+
+    private async Task OnFileChosen(InputFileChangeEventArgs e)
+    {
+        error = null;
+        var file = e.File;
+        if (file.Size > ImageRules.MaxBytes)
+        {
+            error = "Images must be 2 MB or smaller.";
+            await FileSelected.InvokeAsync(null);
+            return;
+        }
+
+        try
+        {
+            using var buffer = new MemoryStream();
+            await file.OpenReadStream(ImageRules.MaxBytes).CopyToAsync(buffer);
+            await FileSelected.InvokeAsync((file.Name, buffer.ToArray()));
+        }
+        catch (IOException)
+        {
+            error = "The file could not be read. Choose a different image.";
+            await FileSelected.InvokeAsync(null);
+        }
+    }
+}

@@ -10,8 +10,6 @@ appsettings.Development.json
 .DS_Store
 instruction/
 script/
-web/wwwroot/uploads/
-
 # dotenv files
 .env
 

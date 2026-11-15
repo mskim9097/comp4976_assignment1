@@ -1,0 +1,53 @@
+@page "/{Tenant}"
+@inject ApiClient Api
+
+<TenantShell Slug="@Tenant">
+    <div class="row g-4 align-items-center mb-4">
+        @if (context.LogoUrl is not null)
+        {
+            <div class="col-md-3 text-center"><img src="@Api.Absolute(context.LogoUrl)" class="tenant-logo-lg" alt="@context.Name logo" /></div>
+        }
+        <div class="col">
+            <h1 class="tenant-heading">@context.Name</h1>
+            <p class="text-muted mb-1">@context.Province</p>
+            @if (!string.IsNullOrWhiteSpace(context.Description)) { <p class="mb-2">@context.Description</p> }
+            <p class="mb-0">Election day: <strong>@context.ElectionDate.ToString("dddd, MMMM d, yyyy")</strong></p>
+        </div>
+    </div>
+
+    <h2 class="h4">Positions on the ballot</h2>
+    @if (error is not null) { <div class="alert alert-danger">@error</div> }
+    else if (positions is null) { <p class="text-muted">Loading...</p> }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-3 g-3 mb-4">
+        @foreach (var p in positions)
+        {
+            <div class="col"><div class="card h-100"><div class="card-body">
+                <h3 class="h5">@p.Name</h3>
+                <p class="text-muted mb-2">@p.SeatsAvailable @(p.SeatsAvailable == 1 ? "seat" : "seats") &middot; @p.CandidateCount candidates</p>
+                <a class="btn btn-outline-tenant btn-sm" href="@($"{context.Slug}/candidates?positionId={p.PositionId}")">See candidates</a>
+            </div></div></div>
+        }
+        </div>
+    }
+    <a class="btn btn-tenant" href="@($"{context.Slug}/candidates")">Browse all candidates</a>
+</TenantShell>
+
+@code {
+    [Parameter] public string Tenant { get; set; } = string.Empty;
+
+    private List<PositionDto>? positions;
+    private string? error;
+    private string? loadedFor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loadedFor == Tenant) return;
+        loadedFor = Tenant;
+        positions = null;
+        error = null;
+        try { positions = await Api.GetPositionsAsync(Tenant); }
+        catch (ApiUnavailableException ex) { error = ex.Message; }
+    }
+}

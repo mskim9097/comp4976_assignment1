@@ -1,0 +1,58 @@
+@page "/"
+@inject ApiClient Api
+
+<PageTitle>Municipal Elections Guide</PageTitle>
+
+<div class="container py-4">
+    <div class="p-4 p-lg-5 mb-4 bg-body-tertiary rounded-3">
+        <h1 class="display-5 fw-bold">Get to know your candidates.</h1>
+        <p class="fs-5 text-muted mb-0">Choose your municipality to see its candidates, then build a personal voting guide you can print.</p>
+    </div>
+
+    @if (error is not null)
+    {
+        <div class="alert alert-danger" role="alert">@error <button class="btn btn-link p-0 ms-2" @onclick="LoadAsync">Try again</button></div>
+    }
+    else if (municipalities is null)
+    {
+        <p class="text-muted">Loading municipalities...</p>
+    }
+    else if (municipalities.Count == 0)
+    {
+        <div class="alert alert-info">No municipalities are available yet.</div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+        @foreach (var m in municipalities)
+        {
+            <div class="col">
+                <article class="card h-100" style="--tenant-color: @m.ThemeColor; border-top: .35rem solid var(--tenant-color)">
+                    @if (m.LogoUrl is not null) { <img src="@Api.Absolute(m.LogoUrl)" class="card-img-top p-3 tenant-logo-lg" alt="@m.Name logo" /> }
+                    <div class="card-body">
+                        <h2 class="h4 card-title">@m.Name</h2>
+                        <p class="text-muted">@m.Province</p>
+                        @if (!string.IsNullOrWhiteSpace(m.Description)) { <p>@m.Description</p> }
+                        <p class="small">Election date: <strong>@m.ElectionDate.ToString("MMMM d, yyyy")</strong><br />@m.CandidateCount candidates for @m.PositionCount positions</p>
+                        <a class="btn btn-tenant" href="@m.Slug">Open @m.Name</a>
+                    </div>
+                </article>
+            </div>
+        }
+        </div>
+    }
+</div>
+
+@code {
+    private List<MunicipalityDto>? municipalities;
+    private string? error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        error = null;
+        try { municipalities = await Api.GetMunicipalitiesAsync(); }
+        catch (ApiUnavailableException ex) { error = ex.Message; }
+    }
+}

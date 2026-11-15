@@ -1,0 +1,61 @@
+@page "/"
+@attribute [Authorize(Policy = MemsPolicies.AnyAdmin)]
+@inherits AdminPage
+@inject ApiStatusClient ApiStatus
+
+<PageTitle>Dashboard</PageTitle>
+
+<h1>Dashboard</h1>
+<p class="text-muted">
+    @if (Scope.IsSuperAdmin) { <text>You manage every municipality.</text> }
+    else { <text>You manage: <strong>@(Admin.ActiveTenant?.Name ?? "no municipality yet")</strong>.</text> }
+</p>
+
+@if (dashboard is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-3 mb-4">
+        <div class="col"><div class="card text-center h-100"><div class="card-body">
+            <div class="display-5 fw-bold" id="municipality-count">@dashboard.Municipalities</div>
+            <div class="text-muted">Total municipalities</div></div></div></div>
+        <div class="col"><div class="card text-center h-100"><div class="card-body">
+            <div class="display-5 fw-bold" id="position-count">@dashboard.Positions</div>
+            <div class="text-muted">Total positions</div></div></div></div>
+        <div class="col"><div class="card text-center h-100"><div class="card-body">
+            <div class="display-5 fw-bold" id="candidate-count">@dashboard.Candidates</div>
+            <div class="text-muted">Total candidates</div></div></div></div>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <strong>API status</strong>
+            <span class="ms-2 badge @(apiHealthy ? "text-bg-success" : "text-bg-danger")">@apiDetail</span>
+            <div class="small text-muted">Checked through Aspire service discovery (https+http://api).</div>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="https://localhost:7101/swagger" target="_blank" rel="noopener">Open API documentation</a>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap gap-2">
+    @if (Scope.IsSuperAdmin) { <a class="btn btn-primary" href="tenants">Municipalities and administrators</a> }
+    <a class="btn btn-primary" href="positions">Positions</a>
+    <a class="btn btn-primary" href="candidates">Candidates</a>
+</div>
+
+@code {
+    private DashboardDto? dashboard;
+    private bool apiHealthy;
+    private string apiDetail = "Checking...";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Admin.EnsureLoadedAsync();
+        dashboard = await Municipalities.GetDashboardAsync(Scope);
+        (apiHealthy, apiDetail) = await ApiStatus.CheckAsync();
+    }
+}

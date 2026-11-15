@@ -1,0 +1,80 @@
+@page "/{Tenant}/candidates/{Id:int}"
+@inject ApiClient Api
+@inject BallotStore Ballot
+
+<TenantShell Slug="@Tenant" Title="@(candidate?.Name ?? "Candidate")">
+    @if (error is not null) { <div class="alert alert-danger">@error</div> }
+    else if (loaded && candidate is null)
+    {
+        <h1>Candidate not found</h1>
+        <p>This candidate is not standing in @context.Name.</p>
+        <a class="btn btn-tenant" href="@($"{context.Slug}/candidates")">Back to candidates</a>
+    }
+    else if (candidate is not null)
+    {
+        var chosen = Ballot.Contains(context.Slug, candidate.CandidateId);
+        <nav aria-label="breadcrumb"><ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@($"{context.Slug}/candidates")">Candidates</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@candidate.Name</li></ol></nav>
+        <div class="row g-4">
+            <div class="col-md-4">
+                @if (candidate.PhotoUrl is not null) { <img class="img-fluid rounded w-100" style="max-height:24rem;object-fit:cover" src="@Api.Absolute(candidate.PhotoUrl)" alt="Photo of @candidate.Name" /> }
+                else { <div class="border rounded text-muted d-flex align-items-center justify-content-center" style="height:14rem">No photo</div> }
+            </div>
+            <div class="col-md-8">
+                <h1 class="tenant-heading">@candidate.Name</h1>
+                <p class="lead text-muted">@candidate.PositionName &middot; @context.Name</p>
+                <dl class="row">
+                    <dt class="col-sm-4">Election date</dt><dd class="col-sm-8">@context.ElectionDate.ToString("MMMM d, yyyy")</dd>
+                    @if (!string.IsNullOrWhiteSpace(candidate.Email)) { <dt class="col-sm-4">Email</dt><dd class="col-sm-8"><a href="mailto:@candidate.Email">@candidate.Email</a></dd> }
+                    @if (!string.IsNullOrWhiteSpace(candidate.Website)) { <dt class="col-sm-4">Website</dt><dd class="col-sm-8"><a href="@candidate.Website" target="_blank" rel="noopener noreferrer">@candidate.Website</a></dd> }
+                </dl>
+                <h2 class="h5">Biography</h2>
+                <p>@(string.IsNullOrWhiteSpace(candidate.Profile) ? "No biography provided." : candidate.Profile)</p>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn @(chosen ? "btn-outline-danger" : "btn-tenant")" @onclick="() => ToggleAsync(context)">
+                        @(chosen ? "Remove from my guide" : "Add to my guide")
+                    </button>
+                    <a class="btn btn-outline-secondary" href="@($"{context.Slug}/candidates")">Back</a>
+                </div>
+            </div>
+        </div>
+    }
+    else { <p class="text-muted">Loading...</p> }
+</TenantShell>
+
+@code {
+    [Parameter] public string Tenant { get; set; } = string.Empty;
+    [Parameter] public int Id { get; set; }
+
+    private CandidateDto? candidate;
+    private string? error;
+    private bool loaded;
+    private string? loadedFor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var key = $"{Tenant}/{Id}";
+        if (loadedFor == key) return;
+        loadedFor = key;
+        loaded = false;
+        try
+        {
+            // The API only searches THIS tenant: an id from another municipality comes back as "not found".
+            candidate = await Api.GetCandidateAsync(Tenant, Id);
+        }
+        catch (ApiUnavailableException ex) { error = ex.Message; }
+        loaded = true;
+    }
+
+    private async Task ToggleAsync(MunicipalityDto tenant)
+    {
+        if (candidate is null) return;
+        if (Ballot.Contains(tenant.Slug, candidate.CandidateId))
+            await Ballot.RemoveAsync(tenant.Slug, candidate.CandidateId);
+        else
+            await Ballot.AddAsync(new BallotItem(tenant.Slug, tenant.Name, tenant.ElectionDate.ToString("yyyy-MM-dd"),
+                candidate.CandidateId, candidate.Name, candidate.PositionName,
+                candidate.PhotoUrl is null ? null : Api.Absolute(candidate.PhotoUrl)));
+    }
+}

@@ -1,0 +1,14 @@
+@* Success / error banner used by the admin pages. *@
+@if (!string.IsNullOrEmpty(Success))
+{
+    <div class="alert alert-success" role="status">@Success</div>
+}
+@if (!string.IsNullOrEmpty(Error))
+{
+    <div class="alert alert-danger" role="alert">@Error</div>
+}
+
+@code {
+    [Parameter] public string? Success { get; set; }
+    [Parameter] public string? Error { get; set; }
+}

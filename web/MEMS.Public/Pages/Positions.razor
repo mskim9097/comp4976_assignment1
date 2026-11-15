@@ -1,0 +1,41 @@
+@page "/{Tenant}/positions"
+@inject ApiClient Api
+
+<TenantShell Slug="@Tenant" Title="Positions">
+    <h1 class="tenant-heading mb-3">Positions in @context.Name</h1>
+    @if (error is not null) { <div class="alert alert-danger">@error</div> }
+    else if (positions is null) { <p class="text-muted">Loading...</p> }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead><tr><th>Position</th><th>Seats available</th><th>Candidates</th><th></th></tr></thead>
+                <tbody>
+                @foreach (var p in positions)
+                {
+                    <tr>
+                        <td>@p.Name</td><td>@p.SeatsAvailable</td><td>@p.CandidateCount</td>
+                        <td class="text-end"><a class="btn btn-outline-tenant btn-sm" href="@($"{context.Slug}/candidates?positionId={p.PositionId}")">View candidates</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</TenantShell>
+
+@code {
+    [Parameter] public string Tenant { get; set; } = string.Empty;
+
+    private List<PositionDto>? positions;
+    private string? error;
+    private string? loadedFor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (loadedFor == Tenant) return;
+        loadedFor = Tenant;
+        try { positions = await Api.GetPositionsAsync(Tenant); }
+        catch (ApiUnavailableException ex) { error = ex.Message; }
+    }
+}

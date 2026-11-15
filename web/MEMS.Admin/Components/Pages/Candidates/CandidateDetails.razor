@@ -1,0 +1,50 @@
+@page "/candidates/{Id:int}"
+@attribute [Authorize(Policy = MemsPolicies.AnyAdmin)]
+@inherits AdminPage
+
+<PageTitle>Candidate</PageTitle>
+
+@if (notFound)
+{
+    <div class="alert alert-danger">Candidate not found, or it belongs to another municipality.</div>
+}
+else if (candidate is not null)
+{
+    <nav aria-label="breadcrumb"><ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="candidates">Candidates</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@candidate.Name</li></ol></nav>
+    <div class="row g-4">
+        <div class="col-md-4">
+            @if (candidate.PhotoUrl is not null) { <img class="candidate-photo-lg" src="@PhotoSrc(candidate)" alt="Photo of @candidate.Name" /> }
+            else { <div class="border rounded text-muted d-flex align-items-center justify-content-center" style="height:12rem">No photo</div> }
+        </div>
+        <div class="col-md-8">
+            <h1>@candidate.Name</h1>
+            <p class="lead text-muted">@candidate.PositionName &middot; @Admin.ActiveTenant?.Name</p>
+            <dl class="row">
+                <dt class="col-sm-3">Added</dt><dd class="col-sm-9">@candidate.CreatedUtc.ToString("yyyy-MM-dd")</dd>
+                @if (!string.IsNullOrWhiteSpace(candidate.Email)) { <dt class="col-sm-3">Email</dt><dd class="col-sm-9">@candidate.Email</dd> }
+                @if (!string.IsNullOrWhiteSpace(candidate.Website)) { <dt class="col-sm-3">Website</dt><dd class="col-sm-9"><a href="@candidate.Website" target="_blank" rel="noopener noreferrer">@candidate.Website</a></dd> }
+            </dl>
+            <h2 class="h5">Biography</h2>
+            <p>@(string.IsNullOrWhiteSpace(candidate.Profile) ? "No biography provided." : candidate.Profile)</p>
+            <a class="btn btn-primary" href="candidates/@candidate.CandidateId/edit">Edit</a>
+            <a class="btn btn-outline-secondary" href="candidates">Back</a>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private CandidateDto? candidate;
+    private bool notFound;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Admin.EnsureLoadedAsync();
+        // The query is restricted to the admin's active tenant: another tenant's candidate id is simply "not found".
+        candidate = Admin.ActiveTenantId is int tenantId ? await Candidates.GetAsync(tenantId, Id) : null;
+        notFound = candidate is null;
+    }
+}

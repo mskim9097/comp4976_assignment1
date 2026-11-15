@@ -1,56 +1,53 @@
 # Municipal Elections Management System
 
-BCIT COMP4976 / COMP4977 - Assignment 1 (due Fri Oct 23, 2026, 11:59 pm)
+BCIT COMP4976 / COMP4977 project. The web application is a multi-project .NET solution orchestrated by .NET Aspire; the SwiftUI app remains in `ios/`.
 
-One repository for both courses. The MVC site and the Web API are one project with one SQLite database
-(see [docs/erd.md](docs/erd.md)); the iOS app talks to the Web API.
-
-| Folder | What it is |
+| Path | Purpose |
 |---|---|
-| `web/` | One ASP.NET Core project: the MVC site (COMP4976: public site, Admin area, cookie login) and the Web API under `/api` (COMP4977: JWT, Swagger). EF Core Code First, one SQLite database, Identity |
-| `ios/` | SwiftUI app "Municipal Elections Companion" (COMP4977) |
-| `docs/` | `readme.txt` (COMP4976), ERD, architecture diagram, [API documentation](docs/api.md) |
-| `.github/` | Copilot instructions / prompts / skills (COMP4976) and the Azure deployment workflow; must stay at the repo root |
+| `web/MEMS.AppHost/` | Aspire AppHost for the SQL Server, API, Admin, and Public projects |
+| `web/MEMS.Api/` | JSON Web API and Swagger |
+| `web/MEMS.Admin/` | Admin web application |
+| `web/MEMS.Public/` | Public web application |
+| `web/MEMS.Data/` | EF Core models, DbContext, migrations, and seed data |
+| `web/MEMS.Shared/` | API DTOs shared by the web projects |
+| `web/MEMS.ServiceDefaults/` | Shared Aspire service defaults |
+| `ios/` | SwiftUI app "Municipal Elections Companion" |
+| `docs/` | Assignment notes, architecture, data model, and API documentation |
 
-Requirements: .NET 10 SDK (`dotnet --version`), `dotnet tool install --global dotnet-ef`; Xcode for the iOS app.
+## Requirements
 
-## Deployed apps
+- .NET 10 SDK
+- .NET Aspire CLI
+- Docker Desktop (Aspire starts SQL Server in a container)
+- Xcode for the iOS app
 
-| What | URL |
-|---|---|
-| Web app: MVC site at `/`, Web API at `/api/...`, Swagger UI at `/swagger` | https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net |
+## Build and run
 
-## Local setup
+Build the solution from the repository root:
 
-Secrets and connection strings are **not** committed. Copy the example file and keep the copy untracked:
-
-```bash
-cp web/appsettings.Development.example.json web/appsettings.Development.json
+```powershell
+dotnet build web\MEMS.slnx
 ```
 
-On Windows (PowerShell): `Copy-Item web/appsettings.Development.example.json web/appsettings.Development.json`
+Run the Aspire application from `web/`:
 
-Set `Jwt:Key` in `web/appsettings.Development.json` to a random string of at least 32 characters (`openssl rand -base64 48`); see [docs/api.md](docs/api.md).
-Seeded admin users (password `P@$$w0rd`): `super` (Super Admin) and `pm` (Pitt Meadows Admin).
-
-Build and run:
-
-```bash
-dotnet build MunicipalElections.sln
-dotnet run --project web --launch-profile http     # http://localhost:5276
+```powershell
+Set-Location web
+aspire run
 ```
 
-iOS app (macOS with Xcode only): open `ios/MunicipalElectionsCompanion/MunicipalElectionsCompanion.xcodeproj`,
-pick an iPhone simulator and press Run. See [ios/README.md](ios/README.md).
+Aspire starts SQL Server, the API, Admin, and Public apps. Open the Aspire dashboard to find each app's URL and the API's Swagger UI. SQL Server data persists in the Docker volume `mems-sql-data-v2`. The SQL password is an Aspire secret parameter; set it with .NET User Secrets if prompted:
 
-## Branches
+```powershell
+dotnet user-secrets set "Parameters:sql-password" "<strong-password>" --project MEMS.AppHost\MEMS.AppHost.csproj
+```
 
-Work on your own branch (`minsu`, `justice`) and open a Pull Request into `dev`.
-`dev` is merged into `main` when stable. Do not push directly to `main` or `dev`.
-Pushes to `main` that change `web/` redeploy the app to Azure automatically.
+The iOS app is built separately on macOS with Xcode. Open `ios/MunicipalElectionsCompanion/MunicipalElectionsCompanion.xcodeproj`, select an iPhone simulator, and run it.
+
+## Deployment
+
+The legacy Azure App Service deployment workflow has been retired. No automated deployment is configured for the Aspire application.
 
 ## Submission
 
-Both courses are submitted from this repository (zip of the complete repository without `bin/`, `obj/`,
-`*.db`, `appsettings.Development.json`, `xcuserdata`). Required files: `docs/readme.txt` (COMP4976),
-the Copilot files in `.github/`, and the project document with ERD, screenshots and the Azure URL.
+Both courses are submitted from this repository. Exclude build outputs, `*.db`, `appsettings.Development.json`, and `xcuserdata` from the submission.

@@ -1,22 +1,16 @@
 # Copilot instructions - Municipal Elections Management System
 
-## Project
-- `web/`: one ASP.NET Core (.NET 10) project with one SQLite database. It serves the MVC site (public pages, Admin area, cookie login) and the JSON Web API under `/api` (JWT, Swagger) used by the iOS app.
-- `ios/`: SwiftUI app for COMP4977 that calls the Web API.
-- Entities: `Municipality`, `Position`, `Candidate`, `SavedCandidate` plus Identity (`ApplicationUser`, roles). Each municipality has an admin role named in `Municipality.AdminRoleName`; `Super Admin` manages everything.
-- Data access: Entity Framework Core Code First with SQLite. Authentication: ASP.NET Core Identity.
+## Project layout
+- `web/` contains the .NET 10 multi-project solution. `MEMS.AppHost` orchestrates SQL Server, `MEMS.Api`, `MEMS.Admin`, and `MEMS.Public`.
+- `MEMS.Data` owns the EF Core model, SQL Server DbContext, migrations, and seed data. `MEMS.Shared` contains DTOs, and `MEMS.ServiceDefaults` contains shared Aspire defaults.
+- `ios/` is the SwiftUI client. Do not modify it unless explicitly requested.
 
 ## Conventions
 - C# naming: PascalCase for types and members, `_camelCase` for private fields, nullable reference types enabled.
-- Controllers stay thin; shared logic goes in services or the DbContext.
-- Use view models and `[Required]`, `[StringLength]`, `[EmailAddress]`, `[Url]` data annotations. Always check `ModelState.IsValid` on the server.
-- Authorization is enforced on the server in every action (not only by hiding UI): Super Admin manages everything; a municipality admin manages only their own municipality's positions and candidates.
-- Uploaded images: validate extension, content type and size; store a generated file name, never the original.
+- Keep controllers thin and put shared data logic in `MEMS.Data` or services.
+- Validate API input and return clear error responses.
+- Use EF Core Code First. Do not edit generated migration files by hand; add a migration instead.
 
 ## Configuration and secrets
-- The connection string lives in `appsettings.Development.json`, which is git-ignored. Update the matching `appsettings.Development.example.json` when keys change.
-- Seed data (roles, users `super` and `pm`, municipalities, positions, candidates) runs at startup after `Database.Migrate()`.
-
-## Do not
-- Do not commit `*.db`, `appsettings.Development.json`, or uploaded files.
-- Do not edit generated migration files by hand; add a new migration instead.
+- Aspire starts SQL Server in a container and provides the API connection string.
+- Keep the SQL password in .NET User Secrets; do not commit secrets, databases, or local development settings.
