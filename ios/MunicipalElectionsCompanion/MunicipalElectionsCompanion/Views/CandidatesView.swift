@@ -41,6 +41,7 @@ struct CandidatesView: View {
             CandidateDetailView(candidate: candidate)
         }
         .searchable(text: $viewModel.searchText, prompt: "Search candidates by name")
+        .textInputAutocapitalization(.never)
         .toolbar { filterMenu }
         .onChange(of: viewModel.selectedMunicipalityId) {
             viewModel.municipalityChanged()
@@ -83,4 +84,14 @@ struct CandidatesView: View {
             }
         }
     }
+}
+
+#Preview("All candidates") {
+    NavigationStack { CandidatesView() }
+        .environment(Session.preview())
+}
+
+#Preview("One municipality") {
+    NavigationStack { CandidatesView(municipality: PreviewData.municipality) }
+        .environment(Session.preview())
 }

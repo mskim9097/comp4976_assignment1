@@ -9,6 +9,7 @@ struct RegisterView: View {
             Section("Your details") {
                 TextField("Name", text: $viewModel.name)
                     .textContentType(.name)
+                    .textInputAutocapitalization(.never)
                 FieldError(message: viewModel.nameError)
 
                 TextField("Email", text: $viewModel.email)
@@ -21,11 +22,11 @@ struct RegisterView: View {
 
             Section("Password (at least \(Validation.minimumPasswordLength) characters)") {
                 SecureField("Password", text: $viewModel.password)
-                    .textContentType(.newPassword)
+                    .textInputAutocapitalization(.never)
                 FieldError(message: viewModel.passwordError)
 
                 SecureField("Confirm password", text: $viewModel.confirmPassword)
-                    .textContentType(.newPassword)
+                    .textInputAutocapitalization(.never)
                 FieldError(message: viewModel.confirmError)
             }
 

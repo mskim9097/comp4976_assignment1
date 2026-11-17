@@ -55,3 +55,8 @@ struct VotingGuideView: View {
         }
     }
 }
+
+#Preview {
+    VotingGuideView()
+        .environment(Session.preview())
+}

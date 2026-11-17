@@ -26,7 +26,7 @@ BCIT COMP4976 / COMP4977 project. The web application is a multi-project .NET so
 Build the solution from the repository root:
 
 ```powershell
-dotnet build web\MEMS.slnx
+dotnet build web\MEMS.sln
 ```
 
 Run the Aspire application from `web/`:

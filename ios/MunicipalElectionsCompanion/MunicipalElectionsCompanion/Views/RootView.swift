@@ -12,3 +12,13 @@ struct RootView: View {
         }
     }
 }
+
+#Preview("Logged out") {
+    RootView()
+        .environment(Session.preview(loggedIn: false))
+}
+
+#Preview("Logged in") {
+    RootView()
+        .environment(Session.preview())
+}
