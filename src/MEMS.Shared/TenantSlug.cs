@@ -12,11 +12,13 @@ public static partial class TenantSlug
     [GeneratedRegex(Pattern)]
     private static partial Regex SlugRegex();
 
-    // Words that are already used by the API routes (/api/auth, /api/municipalities ...) or by the apps.
+    // Words that are already used by the API routes (/api/auth, /api/municipalities ...), by the apps and by the
+    // static folders and pages of the public site (/css, /js, /not-found ...).
     private static readonly HashSet<string> Reserved = new(StringComparer.Ordinal)
     {
-        "api", "admin", "auth", "municipalities", "candidates", "offices", "elections", "positions",
-        "swagger", "openapi", "health", "alive", "images", "uploads"
+        "api", "admin", "auth", "login", "logout", "municipalities", "candidates", "offices", "elections", "positions",
+        "guide", "swagger", "openapi", "health", "alive", "images", "uploads", "css", "js", "lib", "media",
+        "not-found", "error"
     };
 
     public static bool IsValid(string? slug) => !string.IsNullOrEmpty(slug) && SlugRegex().IsMatch(slug);

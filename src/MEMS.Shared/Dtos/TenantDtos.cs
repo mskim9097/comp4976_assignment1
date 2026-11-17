@@ -85,7 +85,7 @@ public class CandidateRequest
     [StringLength(Limits.ProfileMax, ErrorMessage = "The biography can be at most {1} characters.")]
     public string? Biography { get; set; }
 
-    [Url(ErrorMessage = "Enter a valid website URL."), StringLength(Limits.WebsiteMax)]
+    [HttpUrl, StringLength(Limits.WebsiteMax)]
     public string? Website { get; set; }
 
     [EmailAddress(ErrorMessage = "Enter a valid email address."), StringLength(Limits.EmailMax)]

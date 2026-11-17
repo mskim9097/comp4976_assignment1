@@ -68,7 +68,7 @@ Seed data: 4 municipalities, 12 positions (Mayor, Councillor, School Trustee), 2
 
 ## Branches and deployment
 
-Work is done on a personal branch, merged into `dev2` (`dev` still holds Assignment 1), and `dev2` into `main`. A push to `main` that changes `src/` redeploys only the Web API (`MEMS.Api`) to Azure App Service (`.github/workflows`); the Blazor Admin and Public sites run locally with Aspire.
+Work is done on a personal branch, merged into `dev`, and `dev` into `main`. A push to `main` that changes `src/` redeploys only the Web API (`MEMS.Api`) to Azure App Service (`.github/workflows`); the Blazor Admin and Public sites run locally with Aspire.
 
 The deployed Api is used by the iOS app. To save Azure credits (as advised by the instructor) it stores its data in a **SQLite file** instead of SQL Server (the Api supports both; the Aspire setup for the .NET assignment uses SQL Server). The App Service needs these settings:
 
