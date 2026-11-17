@@ -35,7 +35,6 @@ var publicSite = builder.AddProject<Projects.MEMS_Public>("public")
 // The public site runs in the browser, so the Api needs to know its address (CORS).
 admin.WithEnvironment("PublicSite__BaseUrl", publicSite.GetEndpoint("https"));
 
-api.WithEnvironment("Cors__AllowedOrigins__0", publicSite.GetEndpoint("https"))
-   .WithEnvironment("Cors__AllowedOrigins__1", publicSite.GetEndpoint("http"));
+api.WithEnvironment("Cors__AllowedOrigins__0", publicSite.GetEndpoint("https"));
 
 builder.Build().Run();
