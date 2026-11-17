@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
+// The Api is reached by its Aspire name: service discovery resolves https+http://api to the address of the api resource.
+builder.Services.AddHttpClient("api", client => client.BaseAddress = new Uri("https+http://api"));
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddCascadingAuthenticationState();

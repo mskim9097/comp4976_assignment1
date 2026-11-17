@@ -35,7 +35,7 @@ A municipality is a tenant and is named by its **slug** (`burnaby`, `surrey`, `r
 | POST, PUT, DELETE | `/api/{slug}/candidates[/{id}]` | admin of the tenant | Create, update, delete a candidate |
 | POST | `/api/{slug}/candidates/{id}/photo` | admin of the tenant | Upload a photo |
 | GET | `/api/candidates?city=`, `/api/candidates/search?city=&name=`, `/api/candidates/{id}?city=` | public | Candidates of a city (mobile app) |
-| GET | `/api/offices?city=`, `/api/offices/{id}?city=` | public | Elected positions of a city |
+| GET | `/api/offices?city=`, `/api/offices/{id}?city=` | public | Elected positions of a city (also `/api/positions`, the Assignment 1 name) |
 | GET | `/api/elections?city=` | public | Election date and offices of a city |
 
 ## Examples

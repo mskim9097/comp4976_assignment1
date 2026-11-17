@@ -25,12 +25,14 @@ public class CityController(
     public async Task<ActionResult<CandidateDto>> GetCandidate([FromQuery] string city, int id, CancellationToken ct) =>
         (await candidates.GetAsync(id, ct)).ToDto(Request);
 
-    // "Offices" are the elected positions of the city.
+    // "Offices" are the elected positions of the city (/api/positions is the name used in Assignment 1).
     [HttpGet("/api/offices")]
+    [HttpGet("/api/positions")]
     public async Task<ActionResult<IEnumerable<PositionDto>>> GetOffices([FromQuery] string city, CancellationToken ct) =>
         Ok((await positions.ListAsync(tenant.MunicipalityId!.Value, ct)).Select(p => p.ToDto()));
 
     [HttpGet("/api/offices/{id:int}")]
+    [HttpGet("/api/positions/{id:int}")]
     public async Task<ActionResult<PositionDto>> GetOffice([FromQuery] string city, int id, CancellationToken ct) =>
         (await positions.GetAsync(id, ct)).ToDto();
 

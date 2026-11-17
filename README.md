@@ -37,7 +37,7 @@ The first start pulls the SQL Server 2022 image. The Api creates the database, a
 | Admin site | https://localhost:7036/admin |
 | Web API and Swagger UI | https://localhost:7261/swagger |
 
-The public site reads the Api address from `src/MEMS.Public/wwwroot/appsettings.json` (a browser app cannot use the server-side service discovery); it matches the fixed Api port in `launchSettings.json`.
+The public site reads the Api address from `src/MEMS.Public/wwwroot/appsettings.json`, because a browser app cannot use the server-side service discovery. It matches the fixed Api port in `launchSettings.json`.
 
 iOS app (macOS with Xcode only): open `ios/MunicipalElectionsCompanion/MunicipalElectionsCompanion.xcodeproj`, pick an iPhone or iPad simulator and press Run. See [ios/README.md](ios/README.md).
 
@@ -68,9 +68,9 @@ Seed data: 4 municipalities, 12 positions (Mayor, Councillor, School Trustee), 2
 
 ## Branches and deployment
 
-Work is done on a personal branch, merged into `dev`, and `dev` into `main`. A push to `main` that changes `src/` redeploys only the Web API (`MEMS.Api`) to Azure App Service (`.github/workflows`); the Blazor Admin and Public sites run locally with Aspire.
+Work is done on a personal branch, merged into `dev`, and `dev` into `main`. A push to `main` that changes `src/` redeploys only the Web API (`MEMS.Api`) to Azure App Service (`.github/workflows`). The Blazor Admin and Public sites run locally with Aspire.
 
-The deployed Api is used by the iOS app. To save Azure credits (as advised by the instructor) it stores its data in a **SQLite file** instead of SQL Server (the Api supports both; the Aspire setup for the .NET assignment uses SQL Server). The App Service needs these settings:
+The deployed Api is used by the iOS app. To save Azure credits, as advised by the instructor, it stores its data in a **SQLite file** instead of SQL Server. The Api supports both. The Aspire setup for the .NET assignment uses SQL Server. The App Service needs these settings:
 
 | Setting | Value |
 |---|---|
@@ -86,14 +86,22 @@ The database file is created and seeded when the Api starts.
 
 The same repository is submitted for COMP4976 and COMP4977. The **iOS project (and `firebase/`) must not be in the COMP4976 zip**; the COMP4977 zip has everything.
 
-Create the zips from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`):
+Create the zips from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`). Run this in the repository root; the zips are written next to the repository folder:
 
 ```bash
 # COMP4976 (.NET): everything except the iOS app and its Firebase rules
-git archive --format=zip --prefix=MEMS/ -o MEMS-COMP4976.zip main -- . ':(exclude)ios' ':(exclude)firebase'
+git archive --format=zip --prefix=MEMS/ -o ../MEMS-COMP4976.zip main -- . ':(exclude)ios' ':(exclude)firebase'
 
 # COMP4977 (iOS): the complete repository, including ios/
-git archive --format=zip --prefix=MEMS/ -o MEMS-COMP4977.zip main
+git archive --format=zip --prefix=MEMS/ -o ../MEMS-COMP4977.zip main
 ```
 
-Each zip also needs its own project document (Word for COMP4976, PDF for COMP4977). Links to `ios/` do not resolve inside the COMP4976 zip.
+As in Assignment 1, each zip also contains its own project document in the `MEMS/` folder (Word for COMP4976, PDF for COMP4977):
+
+```bash
+cd .. && mkdir -p doc76/MEMS doc77/MEMS
+cp /path/to/COMP4976-Assignment2-Documentation.docx doc76/MEMS/ && (cd doc76 && zip ../MEMS-COMP4976.zip MEMS/*.docx)
+cp /path/to/COMP4977-Assignment2-Documentation.pdf doc77/MEMS/ && (cd doc77 && zip ../MEMS-COMP4977.zip MEMS/*.pdf)
+```
+
+Links to `ios/` do not resolve inside the COMP4976 zip.

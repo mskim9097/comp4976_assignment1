@@ -1,6 +1,7 @@
 @page "/{Slug}/candidates"
 @inherits TenantPageBase
 @inject ApiClient Api
+@inject NavigationManager Navigation
 
 <PageTitle>Candidates - @(Tenant?.Name)</PageTitle>
 
@@ -11,10 +12,19 @@
 @if (Tenant is not null && !Loading && Error is null)
 {
     <div class="row g-2 mb-3">
-        <div class="col-md-6">
+        <div class="col-md-5">
             <label class="visually-hidden" for="search">Search candidates by name</label>
             <input id="search" class="form-control" placeholder="Search candidates by name" autocomplete="off"
                    @bind="search" @bind:event="oninput" @bind:after="SearchAsync" />
+        </div>
+        <div class="col-md-3">
+            <label class="visually-hidden" for="municipality">Filter by municipality</label>
+            <select id="municipality" class="form-select" @onchange="ChangeMunicipality">
+                @foreach (var m in municipalities)
+                {
+                    <option value="@m.Slug" selected="@string.Equals(m.Slug, Tenant.Slug, StringComparison.OrdinalIgnoreCase)">@m.Name</option>
+                }
+            </select>
         </div>
         <div class="col-md-4">
             <label class="visually-hidden" for="position">Filter by position</label>
@@ -45,6 +55,7 @@
 @code {
     [SupplyParameterFromQuery(Name = "positionId")] public int? PositionIdFromQuery { get; set; }
 
+    private List<MunicipalityDto> municipalities = [];
     private List<PositionDto> positions = [];
     private List<CandidateDto> candidates = [];
     private string search = string.Empty;
@@ -54,9 +65,19 @@
 
     protected override async Task LoadAsync()
     {
+        municipalities = await Api.GetMunicipalitiesAsync();
         positions = await Api.GetPositionsAsync(Slug);
         positionId = positions.Any(p => p.PositionId == PositionIdFromQuery) ? PositionIdFromQuery!.Value : 0;
         candidates = await Api.GetCandidatesAsync(Slug, null, positionId == 0 ? null : positionId);
+    }
+
+    // Another municipality is another tenant: its own address, its own candidates.
+    private void ChangeMunicipality(ChangeEventArgs e)
+    {
+        if (e.Value is string slug && !string.Equals(slug, Tenant?.Slug, StringComparison.OrdinalIgnoreCase))
+        {
+            Navigation.NavigateTo($"{slug}/candidates");
+        }
     }
 
     // Only the answer of the latest search is shown, even when requests finish in another order.
