@@ -84,13 +84,13 @@ The database file is created and seeded when the Api starts.
 
 ## Submission
 
-The same repository is submitted for COMP4976 and COMP4977. The **iOS project must not be in the COMP4976 zip**; the COMP4977 zip has everything.
+The same repository is submitted for COMP4976 and COMP4977. The **iOS project (and `firebase/`) must not be in the COMP4976 zip**; the COMP4977 zip has everything.
 
 Create the zips from the committed files of `main` (no `bin/`, `obj/`, `*.db`, `appsettings.Development.json`):
 
 ```bash
-# COMP4976 (.NET): everything except the iOS app
-git archive --format=zip --prefix=MEMS/ -o MEMS-COMP4976.zip main -- . ':(exclude)ios'
+# COMP4976 (.NET): everything except the iOS app and its Firebase rules
+git archive --format=zip --prefix=MEMS/ -o MEMS-COMP4976.zip main -- . ':(exclude)ios' ':(exclude)firebase'
 
 # COMP4977 (iOS): the complete repository, including ios/
 git archive --format=zip --prefix=MEMS/ -o MEMS-COMP4977.zip main
