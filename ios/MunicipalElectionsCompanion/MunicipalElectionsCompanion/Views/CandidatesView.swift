@@ -10,7 +10,10 @@ struct CandidatesView: View {
     @State private var viewModel = CandidatesViewModel()
 
     var body: some View {
-        content
+        VStack(spacing: 0) {
+            filterBar
+            content
+        }
             .navigationTitle("Candidates")
             .navigationSubtitle(session.city.map { "City: \($0)" } ?? "")
             .navigationDestination(for: Candidate.self) { candidate in
@@ -18,7 +21,6 @@ struct CandidatesView: View {
             }
             .searchable(text: $viewModel.searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search candidates by name")
             .textInputAutocapitalization(.never)
-            .toolbar { filterMenu }
             .onChange(of: session.city) {
                 viewModel.clear()
             }
@@ -67,9 +69,9 @@ struct CandidatesView: View {
         }
     }
 
-    @ToolbarContentBuilder
-    private var filterMenu: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
+    // The position filter sits above the list, not in the toolbar: a toolbar item disappears while the search field is active.
+    private var filterBar: some View {
+        HStack {
             Menu {
                 Picker("Position", selection: $viewModel.selectedPositionId) {
                     Text("All Positions").tag(Int?.none)
@@ -83,11 +85,19 @@ struct CandidatesView: View {
                     }
                 }
             } label: {
-                Label("Filter", systemImage: viewModel.hasActiveFilters
+                Label(positionName, systemImage: viewModel.hasActiveFilters
                       ? "line.3.horizontal.decrease.circle.fill"
                       : "line.3.horizontal.decrease.circle")
             }
+            .buttonStyle(.bordered)
+            Spacer()
         }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+    }
+
+    private var positionName: String {
+        election.offices.first { $0.positionId == viewModel.selectedPositionId }?.name ?? "All Positions"
     }
 }
 

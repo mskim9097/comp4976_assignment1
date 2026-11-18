@@ -33,9 +33,15 @@ struct FirestoreSelectionStore: SelectionStoring {
         }
     }
 
+    // Only the notes and the modified date change. Sending the whole document would send the creation date again, and a
+    // date that went through a Swift Date can differ by a microsecond, which the security rules (dateCreated must stay the
+    // same) would refuse.
     func update(_ selection: CandidateSelection) async throws {
         try await FirebaseErrorMapper.run {
-            try await collection.document(selection.id).setData(Firestore.Encoder().encode(selection))
+            try await collection.document(selection.id).updateData([
+                "notes": selection.notes,
+                "dateModified": Timestamp(date: selection.dateModified)
+            ])
         }
     }
 
