@@ -56,6 +56,7 @@ iOS app (macOS with Xcode only): open `ios/MunicipalElectionsCompanion/Municipal
 | `surreyadmin` | Municipality Admin | Surrey |
 | `richmondadmin` | Municipality Admin | Richmond |
 | `pm` | Municipality Admin | Pitt Meadows |
+| `aa@aa.aa` | none | iOS app login (exists on the Azure server only; locally create an account in the app) |
 
 Seed data: 4 municipalities, 12 positions (Mayor, Councillor, School Trustee), 25 fictional candidates. People who register in the iOS app are normal users without a role and cannot log in to the admin site.
 
@@ -96,11 +97,11 @@ git archive --format=zip --prefix=MEMS/ -o ../MEMS-COMP4976.zip main -- . ':(exc
 git archive --format=zip --prefix=MEMS/ -o ../MEMS-COMP4977.zip main
 ```
 
-As in Assignment 1, each zip also contains its own project document in the `MEMS/` folder (Word for COMP4976, PDF for COMP4977):
+As in Assignment 1, each zip also contains its own project document (PDF) in the `MEMS/` folder:
 
 ```bash
 cd .. && mkdir -p doc76/MEMS doc77/MEMS
-cp /path/to/COMP4976-Assignment2-Documentation.docx doc76/MEMS/ && (cd doc76 && zip ../MEMS-COMP4976.zip MEMS/*.docx)
+cp /path/to/COMP4976-Assignment2-Documentation.pdf doc76/MEMS/ && (cd doc76 && zip ../MEMS-COMP4976.zip MEMS/*.pdf)
 cp /path/to/COMP4977-Assignment2-Documentation.pdf doc77/MEMS/ && (cd doc77 && zip ../MEMS-COMP4977.zip MEMS/*.pdf)
 ```
 
