@@ -16,7 +16,7 @@ struct CandidatesView: View {
             .navigationDestination(for: Candidate.self) { candidate in
                 CandidateDetailView(candidate: candidate)
             }
-            .searchable(text: $viewModel.searchText, prompt: "Search candidates by name")
+            .searchable(text: $viewModel.searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search candidates by name")
             .textInputAutocapitalization(.never)
             .toolbar { filterMenu }
             .onChange(of: session.city) {
