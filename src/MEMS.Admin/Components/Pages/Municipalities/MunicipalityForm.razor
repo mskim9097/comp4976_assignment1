@@ -134,11 +134,20 @@ else
 
             if (logo is not null)
             {
-                await Admin.RunAsync(async s =>
+                try
                 {
-                    await using var stream = logo.OpenReadStream(Limits.ImageMaxBytes);
-                    await s.Municipalities.SetLogoAsync(saved.MunicipalityId, logo.Name, logo.ContentType, logo.Size, stream);
-                });
+                    await Admin.RunAsync(async s =>
+                    {
+                        await using var stream = logo.OpenReadStream(Limits.ImageMaxBytes);
+                        await s.Municipalities.SetLogoAsync(saved.MunicipalityId, logo.Name, logo.ContentType, logo.Size, stream);
+                    });
+                }
+                catch when (Id is null)
+                {
+                    // Adding is all or nothing: remove the municipality that was just created, so the form can be sent again.
+                    await Admin.RunAsync(s => s.Municipalities.DeleteAsync(saved.MunicipalityId));
+                    throw;
+                }
             }
             Navigation.NavigateTo($"municipalities/{saved.MunicipalityId}");
         });

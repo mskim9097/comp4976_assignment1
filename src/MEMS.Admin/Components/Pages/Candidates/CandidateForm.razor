@@ -114,11 +114,20 @@ else if (error is null)
             var saved = await Admin.RunAsync(s => Id is null ? s.Candidates.CreateAsync(model!) : s.Candidates.UpdateAsync(Id.Value, model!));
             if (photo is not null)
             {
-                await Admin.RunAsync(async s =>
+                try
                 {
-                    await using var stream = photo.OpenReadStream(Limits.ImageMaxBytes);
-                    await s.Candidates.SetPhotoAsync(saved.CandidateId, photo.Name, photo.ContentType, photo.Size, stream);
-                });
+                    await Admin.RunAsync(async s =>
+                    {
+                        await using var stream = photo.OpenReadStream(Limits.ImageMaxBytes);
+                        await s.Candidates.SetPhotoAsync(saved.CandidateId, photo.Name, photo.ContentType, photo.Size, stream);
+                    });
+                }
+                catch when (Id is null)
+                {
+                    // Adding is all or nothing: remove the candidate that was just created, so the form can be sent again.
+                    await Admin.RunAsync(s => s.Candidates.DeleteAsync(saved.CandidateId));
+                    throw;
+                }
             }
             Navigation.NavigateTo($"candidates/{saved.CandidateId}");
         });
