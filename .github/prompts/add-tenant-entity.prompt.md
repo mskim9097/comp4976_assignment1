@@ -10,6 +10,6 @@ Add the entity `${input:entity}` (fields: ${input:fields}) to the MEMS solution.
 4. Service in `src/MEMS.Data/Services/` with list, get, create, update, delete. The tenant of the new row must come from a parent loaded through the filtered sets, never from the request. Throw the service exceptions (not found, conflict, rule violation).
 5. Request and DTO classes with validation attributes in `src/MEMS.Shared/Dtos/`.
 6. Register the service in `DependencyInjection.AddMemsServices`.
-7. Update `docs/erd.png` (and the entity list in `docs/api.md`).
+7. Update `docs/erd.png` (and `docs/api.md` when the entity has endpoints).
 
 Finish with the commands to run and the manual checks (a Municipality Admin cannot read or change a row of another municipality).

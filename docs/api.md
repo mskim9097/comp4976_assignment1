@@ -4,6 +4,8 @@ ASP.NET Core Web API (.NET 10, EF Core, JWT) in `src/MEMS.Api`. It uses SQL Serv
 
 Local address: `https://localhost:7261` (started by the Aspire AppHost).
 
+Deployed API (Azure App Service, used by the iOS app): https://municipalelections-api-mskim9097-edg2grfychegfwes.canadacentral-01.azurewebsites.net (Swagger UI at `/swagger`). It runs on the Free F1 plan, so the first request after a quiet period can take 10-30 seconds while the app wakes up.
+
 ## Tenants
 
 A municipality is a tenant and is named by its **slug** (`burnaby`, `surrey`, `richmond`, `pitt-meadows`).

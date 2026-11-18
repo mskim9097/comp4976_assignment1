@@ -18,7 +18,8 @@ MEMS is a multi-tenant application. Every municipality is a tenant with its own 
 | `src/MEMS.Admin` | Blazor Server administration site (`/admin`, ASP.NET Core Identity) |
 | `src/MEMS.Public` | Blazor WebAssembly public site (one app, tenant from the URL) |
 | `ios/` | SwiftUI app "Municipal Elections Companion" (COMP4977) |
-| `docs/` | API documentation, ERD, architecture diagram |
+| `firebase/` | Firestore security rules of the iOS app (`firestore.rules`, published in the Firebase console) |
+| `docs/` | API documentation, ERD, architecture diagrams, deficiency report |
 
 ## Run it
 
@@ -104,5 +105,7 @@ cd .. && mkdir -p doc76/MEMS doc77/MEMS
 cp /path/to/COMP4976-Assignment2-Documentation.pdf doc76/MEMS/ && (cd doc76 && zip ../MEMS-COMP4976.zip MEMS/*.pdf)
 cp /path/to/COMP4977-Assignment2-Documentation.pdf doc77/MEMS/ && (cd doc77 && zip ../MEMS-COMP4977.zip MEMS/*.pdf)
 ```
+
+After uploading, download both zips and both PDFs from D2L again and compare them with the local files (`shasum -a 256`).
 
 Links to `ios/` do not resolve inside the COMP4976 zip.
